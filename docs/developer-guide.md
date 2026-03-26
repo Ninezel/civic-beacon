@@ -13,6 +13,8 @@ npm install
 npm run dev
 ```
 
+This starts both the frontend and the local API service.
+
 Create a production build with:
 
 ```powershell
@@ -22,17 +24,31 @@ $env:npm_config_cache='g:\Projects\.npm-cache'
 npm run build
 ```
 
+Run only the API service with:
+
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm run dev:api
+```
+
 ## Project layout
 
 - `src/App.tsx`: state orchestration, polling, selection, and top-level composition
 - `src/components/`: isolated UI sections
+- `src/data/coverageCatalogData.ts`: shared starter coverage data used by both client and API layers
 - `src/components/SetupTutorial.tsx`: in-app onboarding for first-time feed setup
 - `src/lib/setup.ts`: persisted setup and profile lifecycle helpers
 - `src/lib/feed.ts`: live feed fetching
-- `src/lib/alertSync.ts`: sync summaries and new-alert detection
-- `src/lib/audio.ts`: alert sound playback
+- `src/lib/alertSync.ts`: sync summaries and new-signal detection
+- `src/lib/audio.ts`: signal sound playback
 - `src/lib/location.ts`: search and selection logic
+- `src/lib/coverageCatalog.ts`: built-in coverage starter data and postcode / ZIP lookup
 - `src/lib/briefing.ts`: briefing shaping and summary metrics
+- `server/index.ts`: optional local API entrypoint
+- `server/services/catalogService.ts`: API-facing starter zone catalog services
+- `server/services/demoBriefingService.ts`: demo API briefing generation
 - `src/types.ts`: shared frontend contracts
 - `src/styles.css`: visual system and responsive layout
 
@@ -41,6 +57,7 @@ npm run build
 - Keep the default build public and usable without login.
 - Do not introduce private auth or database dependencies into the open-source baseline.
 - Treat coverage feeds as replaceable integrations.
+- Keep the optional API service narrow and explicit; do not turn it into an unaudited open proxy.
 - Keep search and selection logic independent from any single provider.
 - Make feed health and trust posture visible to users.
 - Do not silently mix official data with unverified data.
@@ -63,8 +80,8 @@ The open-source core stores setup in browser local storage. That currently inclu
 
 - configured coverage records
 - polling interval
-- alert sound preference
-- alert volume preference
+- signal sound preference
+- signal volume preference
 - unit system preference
 
 Do not treat this as a secure store. It is a convenience layer for local configuration.

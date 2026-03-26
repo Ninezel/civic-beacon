@@ -1,0 +1,107 @@
+# API Reference
+
+Emergency Centre now ships with a small optional Node API service. It is intended for:
+
+- starter coverage catalog browsing
+- postcode and ZIP lookup
+- built-in demo briefing endpoints
+- local health checks
+
+The default local base URL is:
+
+- `http://localhost:8787`
+
+## Endpoints
+
+### `GET /api`
+
+Returns a small discovery document with the exposed routes.
+
+### `GET /api/health`
+
+Returns:
+
+```json
+{
+  "ok": true,
+  "service": "emergency-centre-api",
+  "timestamp": "2026-03-26T14:00:00.000Z"
+}
+```
+
+### `GET /api/catalog/countries`
+
+Returns the built-in starter countries.
+
+### `GET /api/catalog/regions?country=GB`
+
+Returns built-in regions for one country code.
+
+Query params:
+
+- `country`: optional country code such as `GB` or `US`
+
+### `GET /api/catalog/zones?country=GB&region=greater-london`
+
+Returns built-in starter zones filtered by country and optional region.
+
+Query params:
+
+- `country`: optional country code
+- `region`: optional region code
+
+### `GET /api/catalog/lookup?q=SW1A%201AA&country=GB`
+
+Looks up starter zones by UK postcode, US ZIP, alias, place, region, or country name.
+
+Query params:
+
+- `q`: required search text
+- `country`: optional country code to narrow the results
+
+### `GET /api/catalog/zones/:zoneId`
+
+Returns one built-in starter zone by ID.
+
+### `GET /api/briefings/demo/:zoneId`
+
+Returns a normalized demo briefing for one starter zone.
+
+This route exists so the frontend can be used end to end before a real provider is connected.
+
+## Development
+
+Run the client and API together:
+
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm install
+npm run dev
+```
+
+Run only the API:
+
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm run dev:api
+```
+
+Build both layers:
+
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm run build
+```
+
+## Security Notes
+
+- The current API does not implement auth.
+- The current API does not implement rate limiting.
+- The current API does not act as a generic open proxy.
+- If you add upstream fetching later, keep the targets allowlisted and documented.

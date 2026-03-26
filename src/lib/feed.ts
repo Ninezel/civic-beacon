@@ -15,7 +15,9 @@ export async function fetchLiveBriefing(profile: LocationProfile): Promise<LiveB
     throw new Error(`Feed request failed with status ${response.status}`)
   }
 
-  const payload = (await response.json()) as Partial<LiveBriefingResponse>
+  const payload = (await response.json()) as Partial<LiveBriefingResponse> & {
+    hazards?: unknown
+  }
 
   if (!payload.outlook || !payload.weather) {
     throw new Error('Feed response is missing required briefing fields.')
@@ -24,7 +26,7 @@ export async function fetchLiveBriefing(profile: LocationProfile): Promise<LiveB
   return {
     outlook: payload.outlook,
     weather: payload.weather,
-    hazards: ensureArray(payload.hazards),
+    signals: ensureArray(payload.signals ?? payload.hazards),
     news: ensureArray(payload.news),
     sources: ensureArray(payload.sources),
     actions: ensureArray(payload.actions),

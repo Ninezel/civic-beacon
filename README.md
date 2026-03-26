@@ -1,6 +1,6 @@
 # Emergency Centre
 
-Emergency Centre is an open-source web application for monitoring live public hazard briefings across configurable coverage areas. It is designed for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and other public-safety alerts.
+Emergency Centre is an open-source web application for monitoring live public signals across configurable coverage areas. It is designed for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, transport disruption, infrastructure issues, airspace advisories, missing-person bulletins, and other public-safety signals.
 
 The project is intentionally:
 
@@ -24,23 +24,46 @@ Each coverage record includes:
 - coordinates for the coverage record
 - a live briefing endpoint
 
-The application stores that configuration locally in the browser, polls the configured feeds, and renders a public monitoring surface for weather, hazards, public briefings, source health, and readiness actions.
+The application stores that configuration locally in the browser, polls the configured feeds, and renders a public monitoring surface for weather, signals, public briefings, source health, and readiness actions.
+
+The open-source core now also ships with a built-in starter directory for a first set of countries:
+
+- `United Kingdom`
+- `United States`
+
+Users can load a built-in coverage zone into the setup form by selecting:
+
+1. country
+2. region or state
+3. coverage area
+
+They can also jump to a built-in zone by typing a UK postcode or US ZIP code.
+
+The repository now includes a small Node API service for:
+
+- starter coverage catalog endpoints
+- postcode and ZIP lookup endpoints
+- demo briefing endpoints for built-in coverage zones
+- local health checks and API discovery
 
 ## Core Capabilities
 
 - coverage search by postcode, ZIP code, city, district, alias, or code
-- coverage directory dropdown for known supported areas
+- country, region, and coverage-area browsing for configured feeds
+- built-in UK and US starter directory for coverage setup
+- postcode and ZIP lookup against the built-in starter directory
+- optional local API server for starter catalog and demo briefing routes
 - live polling for configured briefing feeds
-- browser sound alerts when new live alerts appear
+- browser sound alerts when new live signals appear
 - metric or imperial display preference
 - built-in setup tutorial and in-app feed-schema reference
 - manual feed refresh and sound test controls
-- hazard, weather, public-briefing, source-health, and readiness panels
+- multi-signal, weather, public-briefing, source-health, and readiness panels
 - open-source baseline with no mandatory login
 
 ## Operating Model
 
-Emergency Centre does not ship with bundled live alert data.
+Emergency Centre does not ship with bundled live signal data.
 
 Instead:
 
@@ -63,6 +86,11 @@ npm install
 npm run dev
 ```
 
+This starts both:
+
+- the Vite client
+- the local API server on `http://localhost:8787`
+
 Create a production build with:
 
 ```powershell
@@ -71,6 +99,22 @@ $env:TMP='g:\Projects\.tmp'
 $env:npm_config_cache='g:\Projects\.npm-cache'
 npm run build
 ```
+
+Run the compiled API server with:
+
+```powershell
+node dist-server/index.js
+```
+
+Useful local API endpoints:
+
+- `GET /api`
+- `GET /api/health`
+- `GET /api/catalog/countries`
+- `GET /api/catalog/regions?country=GB`
+- `GET /api/catalog/zones?country=GB&region=greater-london`
+- `GET /api/catalog/lookup?q=SW1A%201AA&country=GB`
+- `GET /api/briefings/demo/gb-eng-greater-london-central`
 
 ## Feed Requirements
 
@@ -81,16 +125,28 @@ Each coverage area must point to a JSON briefing feed. The minimum required resp
 
 The recommended full contract is documented in [docs/feed-schema.md](./docs/feed-schema.md).
 
+Preferred optional fields:
+
+- `signals`
+- `news`
+- `sources`
+- `actions`
+
+Legacy compatibility:
+
+- `hazards` is still accepted as an alias for `signals` so older feeds do not break immediately
+
 Important constraints:
 
 - do not expose private API keys in a client-visible feed URL
 - use a proxy or edge adapter if the upstream provider needs secrets
 - use a proxy if the upstream does not allow browser access
-- keep alert IDs stable so new-alert sound detection works correctly
+- keep signal IDs stable so new-alert sound detection works correctly
 
 ## Documentation
 
 - [Architecture notes](./docs/architecture.md)
+- [API reference](./docs/api-reference.md)
 - [Feature reference](./docs/feature-reference.md)
 - [Developer guide](./docs/developer-guide.md)
 - [Feed schema](./docs/feed-schema.md)
@@ -100,20 +156,23 @@ Important constraints:
 ## Repository Layout
 
 - `src/App.tsx`: top-level application shell and state orchestration
-- `src/components/`: UI surfaces for overview, coverage selection, setup, alerts, and supporting information
+- `src/components/`: UI surfaces for overview, coverage selection, setup, signals, and supporting information
+- `src/data/coverageCatalogData.ts`: shared built-in UK and US starter coverage data
 - `src/lib/location.ts`: coverage matching, suggestion ranking, and selection helpers
+- `src/lib/coverageCatalog.ts`: built-in UK and US coverage starter directory plus postcode and ZIP lookup helpers
 - `src/lib/briefing.ts`: briefing assembly for the selected coverage area
 - `src/lib/feed.ts`: live feed fetching and baseline response validation
 - `src/lib/setup.ts`: local setup persistence and coverage profile hydration
-- `src/lib/alertSync.ts`: live-alert diffing and sync summary helpers
-- `src/lib/audio.ts`: browser alert sound playback
+- `src/lib/alertSync.ts`: live-signal diffing and sync summary helpers
+- `src/lib/audio.ts`: browser signal sound playback
 - `src/lib/units.ts`: display-layer unit conversion for weather output
+- `server/`: Node API entrypoint plus catalog and demo-briefing services
 - `src/types.ts`: shared frontend contracts
 - `src/styles.css`: visual system and responsive layout
 
 ## Environment And Security Notes
 
-The open-source core currently requires no environment variables.
+The frontend-only baseline still requires no environment variables.
 
 The default baseline also does not require:
 
@@ -122,6 +181,8 @@ The default baseline also does not require:
 - private backend storage
 
 If a live provider needs secrets, keep them out of the public client and document the adapter or proxy layer explicitly.
+
+If you run the local API service, see [.env.example](./.env.example) and [docs/api-reference.md](./docs/api-reference.md).
 
 ## Planned Optional Extensions
 

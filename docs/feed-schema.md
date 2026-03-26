@@ -9,17 +9,21 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
 
 ## Optional but strongly recommended fields
 
-- `hazards`
+- `signals`
 - `news`
 - `sources`
 - `actions`
 - `refreshedAt`
 
+Legacy compatibility:
+
+- `hazards` is still accepted as an alias for `signals`
+
 ## Example response
 
 ```json
 {
-  "outlook": "Heavy rain and river pressure remain the main concerns for the next 12 hours.",
+  "outlook": "Heavy rain and transport pressure remain the main concerns for the next 12 hours.",
   "weather": {
     "temperatureC": 7,
     "condition": "Heavy rain bands",
@@ -27,9 +31,9 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
     "rainChance": 92,
     "advisory": "Flash flooding is possible on low roads and at underpasses."
   },
-  "hazards": [
+  "signals": [
     {
-      "id": "flood-001",
+      "id": "signal-001",
       "title": "Urban flood warning",
       "category": "flood",
       "severity": "High",
@@ -39,7 +43,22 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
       "coverage": "South riverside districts",
       "summary": "Surface water is building quickly in repeated rain bands.",
       "hotspotLabel": "Riverside corridor",
-      "reactionCount": 12
+      "reactionCount": 12,
+      "tags": ["surface water", "road closures"]
+    },
+    {
+      "id": "signal-002",
+      "title": "Airport operations advisory",
+      "category": "airspace",
+      "severity": "Moderate",
+      "status": "Monitoring",
+      "issuedAt": "2026-03-26T12:18:00Z",
+      "source": "Regional operations desk",
+      "coverage": "Western approach corridor",
+      "summary": "Low cloud and crosswinds may slow arrivals this afternoon.",
+      "hotspotLabel": "Western approach",
+      "reactionCount": 3,
+      "tags": ["crosswind", "arrival delays"]
     }
   ],
   "news": [
@@ -88,11 +107,11 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
 }
 ```
 
-### `hazards[]`
+### `signals[]`
 
 - `id`: stable item identifier
 - `title`: short human-readable name
-- `category`: one of `storm`, `flood`, `earthquake`, `wildfire`, `heat`, `air-quality`, `public-safety`
+- `category`: one of `weather`, `storm`, `flood`, `earthquake`, `wildfire`, `heat`, `air-quality`, `infrastructure`, `transport`, `airspace`, `public-safety`, `civil-defense`, `other`
 - `severity`: one of `Critical`, `High`, `Moderate`, `Advisory`
 - `status`: one of `Live`, `Monitoring`, `Recovery`
 - `issuedAt`: displayable issue timestamp
@@ -101,6 +120,7 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
 - `summary`: human-readable description
 - `hotspotLabel`: compact hotspot or corridor label
 - `reactionCount`: numeric count used by the current UI
+- `tags`: optional short descriptors shown as chips in the UI
 
 ### `news[]`
 
@@ -109,13 +129,13 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
 - `source`
 - `publishedAt`
 - `summary`
-- `scope`: one of `Local`, `Regional`, `National`
+- `scope`: one of `Local`, `Regional`, `National`, `Global`
 
 ### `sources[]`
 
 - `id`
 - `name`
-- `type`: one of `Weather`, `Seismic`, `Flood`, `News`, `Civil`
+- `type`: one of `Weather`, `Hydrology`, `Seismic`, `Wildfire`, `Airspace`, `Transport`, `Infrastructure`, `News`, `Civil`, `Other`
 - `status`: one of `Healthy`, `Delayed`, `Manual review`
 - `lastSync`
 - `note`
@@ -131,5 +151,5 @@ Each coverage area in Emergency Centre points to one live briefing URL. That end
 
 - The browser fetches this URL directly in the open-source baseline.
 - If the upstream provider requires authentication or blocks browser requests, put a proxy or adapter in front of it.
-- Keep alert IDs stable across refreshes so new-alert sound detection behaves correctly.
+- Keep signal IDs stable across refreshes so new-signal sound detection behaves correctly.
 - Feed values stay metric in the contract. The client can convert temperature and wind to imperial for display.

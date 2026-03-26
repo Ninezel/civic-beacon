@@ -8,22 +8,49 @@ function normalizeQuery(value: string) {
   return value.trim().toLowerCase()
 }
 
+function normalizeCode(value: string) {
+  return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+}
+
 function createDirectoryDescription(profile: LocationProfile) {
   return `${profile.region} · ${profile.country}`
 }
 
-function scoreMatch(query: string, value: string) {
+function scoreTextMatch(query: string, value: string) {
   const normalizedValue = value.toLowerCase()
 
   if (normalizedValue === query) {
     return 0
   }
 
-  if (normalizedValue.startsWith(query)) {
+  if (normalizedValue.startsWith(query) || query.startsWith(normalizedValue)) {
     return 1
   }
 
-  if (normalizedValue.includes(query)) {
+  if (normalizedValue.includes(query) || query.includes(normalizedValue)) {
+    return 2
+  }
+
+  return Number.POSITIVE_INFINITY
+}
+
+function scoreCodeMatch(query: string, value: string) {
+  const normalizedQuery = normalizeCode(query)
+  const normalizedValue = normalizeCode(value)
+
+  if (!normalizedQuery || !normalizedValue) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  if (normalizedQuery === normalizedValue) {
+    return 0
+  }
+
+  if (normalizedQuery.startsWith(normalizedValue) || normalizedValue.startsWith(normalizedQuery)) {
+    return 1
+  }
+
+  if (normalizedQuery.includes(normalizedValue) || normalizedValue.includes(normalizedQuery)) {
     return 2
   }
 
@@ -74,6 +101,31 @@ export function findProfileById(profiles: LocationProfile[], profileId: string) 
   return profiles.find((profile) => profile.id === profileId) ?? null
 }
 
+export function getCoverageCountries(profiles: LocationProfile[]) {
+  return [...new Set(profiles.map((profile) => profile.country))].sort((left, right) =>
+    left.localeCompare(right),
+  )
+}
+
+export function getCoverageRegions(profiles: LocationProfile[], country: string) {
+  return [...new Set(
+    profiles
+      .filter((profile) => !country || profile.country === country)
+      .map((profile) => profile.region),
+  )].sort((left, right) => left.localeCompare(right))
+}
+
+export function filterCoverageProfiles(
+  profiles: LocationProfile[],
+  country: string,
+  region: string,
+) {
+  return profiles
+    .filter((profile) => !country || profile.country === country)
+    .filter((profile) => !region || profile.region === region)
+    .sort((left, right) => left.name.localeCompare(right.name))
+}
+
 export function getLocationSuggestions(
   profiles: LocationProfile[],
   query: string,
@@ -89,7 +141,11 @@ export function getLocationSuggestions(
 
   const candidates = profiles.flatMap((profile) => {
     const rankedEntries = [
-      ...profile.locationCodes.map((code) => ({ value: code, kind: 'code' as const })),
+      ...profile.locationCodes.map((code) => ({
+        value: code,
+        kind: 'code' as const,
+        rank: scoreCodeMatch(query, code),
+      })),
       ...profile.aliases.map((alias) => ({ value: alias, kind: 'alias' as const })),
       { value: profile.name, kind: 'place' as const },
       { value: profile.region, kind: 'region' as const },
@@ -97,7 +153,10 @@ export function getLocationSuggestions(
     ]
       .map((entry) => ({
         ...entry,
-        rank: scoreMatch(normalized, entry.value),
+        rank:
+          entry.kind === 'code' && 'rank' in entry
+            ? entry.rank
+            : scoreTextMatch(normalized, entry.value),
       }))
       .filter((entry) => Number.isFinite(entry.rank))
       .sort((left, right) => left.rank - right.rank)
@@ -112,8 +171,14 @@ export function getLocationSuggestions(
 
   return candidates
     .sort((left, right) => {
-      const leftScore = scoreMatch(normalized, left.matchedText)
-      const rightScore = scoreMatch(normalized, right.matchedText)
+      const leftScore =
+        left.matchKind === 'code'
+          ? scoreCodeMatch(query, left.matchedText)
+          : scoreTextMatch(normalized, left.matchedText)
+      const rightScore =
+        right.matchKind === 'code'
+          ? scoreCodeMatch(query, right.matchedText)
+          : scoreTextMatch(normalized, right.matchedText)
 
       if (leftScore !== rightScore) {
         return leftScore - rightScore

@@ -18,11 +18,11 @@ const tutorialSteps = [
     label: 'Feed URL',
     title: 'Point the coverage area at a live JSON briefing endpoint',
     body:
-      'The feed URL should return one normalized briefing document containing weather, hazards, public updates, source health, and readiness actions. The browser fetches this URL directly in the open-source baseline.',
+      'The feed URL should return one normalized briefing document containing weather, signals, public updates, source health, and readiness actions. The browser fetches this URL directly in the open-source baseline.',
     checklist: [
       'Use a URL the browser can access directly, or put a proxy in front of the upstream.',
       'Do not put private API keys in a client-visible URL.',
-      'Keep alert IDs stable so new-alert sound detection works properly.',
+      'Keep signal IDs stable so new-alert sound detection works properly.',
     ],
   },
   {
@@ -30,10 +30,10 @@ const tutorialSteps = [
     label: 'Verify',
     title: 'Run the first sync and confirm the feed is healthy',
     body:
-      'After adding the record, use Refresh feeds now. The coverage panel should move out of Waiting, and the feed should populate weather, alerts, and source-health cards. If the feed fails, the error will be surfaced in the control panel.',
+      'After adding the record, use Refresh feeds now. The coverage panel should move out of Waiting, and the feed should populate weather, signal, and source-health cards. If the feed fails, the error will be surfaced in the control panel.',
     checklist: [
       'Look for a live or syncing state instead of Awaiting sync.',
-      'Confirm the weather snapshot and alert feed contain real data.',
+      'Confirm the weather snapshot and signals feed contain real data.',
       'Check the source-audit panel to make sure freshness is visible.',
     ],
   },
@@ -42,7 +42,7 @@ const tutorialSteps = [
     label: 'Operate',
     title: 'Tune monitoring behavior for everyday use',
     body:
-      'Once the feed is healthy, set the polling interval, choose metric or imperial display, and decide whether the browser should play a sound for new live alerts.',
+      'Once the feed is healthy, set the polling interval, choose metric or imperial display, and decide whether the browser should play a sound for new live signals.',
     checklist: [
       'Choose a polling interval that matches how quickly your upstream changes.',
       'Set the display units your users expect.',
@@ -62,7 +62,7 @@ export function SetupTutorial() {
       <div className="panel-heading tutorial-heading">
         <div>
           <div className="section-label">Setup Tutorial</div>
-          <h2>How to connect a real alert feed</h2>
+          <h2>How to connect a real monitoring feed</h2>
         </div>
         <span className="panel-heading-badge">
           Step {activeStepIndex + 1} of {tutorialSteps.length}

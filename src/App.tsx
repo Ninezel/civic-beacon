@@ -12,8 +12,11 @@ import { fetchLiveBriefing } from './lib/feed'
 import {
   createDirectorySelection,
   createSearchSelection,
+  filterCoverageProfiles,
   findBestSuggestion,
   findProfileById,
+  getCoverageCountries,
+  getCoverageRegions,
   getLocationSuggestions,
 } from './lib/location'
 import {
@@ -24,7 +27,14 @@ import {
   readAppSetup,
   writeAppSetup,
 } from './lib/setup'
-import type { AppSetup, LocationMode, LocationProfile, SelectedLocation } from './types'
+import type {
+  AppSetup,
+  CoverageDraft,
+  LocationMode,
+  LocationProfile,
+  SelectedLocation,
+  SetupSettingsUpdate,
+} from './types'
 
 interface SelectionState {
   profileId: string | null
@@ -32,8 +42,16 @@ interface SelectionState {
   matchedText: string
 }
 
+interface DirectoryFilterState {
+  country: string
+  region: string
+}
+
 const initialSetup = readAppSetup()
 const initialProfile = initialSetup.coverageProfiles[0] ?? null
+const searchPrompt =
+  'Search by postcode, ZIP code, address hint, neighborhood, city, or browse by country, region, and coverage area.'
+const setupPrompt = 'Add at least one live coverage feed below to start monitoring actual signals.'
 
 function createInitialSelection(profile: LocationProfile | null): SelectionState {
   if (!profile) {
@@ -52,9 +70,14 @@ function createInitialSelection(profile: LocationProfile | null): SelectionState
 }
 
 function createInitialStatusMessage(profileCount: number) {
-  return profileCount > 0
-    ? 'Search by postcode, ZIP code, address hint, neighborhood, city, or choose a coverage area from the directory.'
-    : 'Add at least one live coverage feed below to start monitoring actual alerts.'
+  return profileCount > 0 ? searchPrompt : setupPrompt
+}
+
+function createInitialDirectoryFilters(profile: LocationProfile | null): DirectoryFilterState {
+  return {
+    country: profile?.country ?? '',
+    region: profile?.region ?? '',
+  }
 }
 
 function buildSelectedLocation(profile: LocationProfile | null, selection: SelectionState): SelectedLocation | null {
@@ -80,6 +103,9 @@ function resolveBriefingUrl(value: string) {
 function App() {
   const [setup, setSetup] = useState<AppSetup>(() => initialSetup)
   const [selection, setSelection] = useState<SelectionState>(() => createInitialSelection(initialProfile))
+  const [directoryFilters, setDirectoryFilters] = useState<DirectoryFilterState>(() =>
+    createInitialDirectoryFilters(initialProfile),
+  )
   const [query, setQuery] = useState(initialProfile?.name ?? '')
   const deferredQuery = useDeferredValue(query)
   const [statusMessage, setStatusMessage] = useState(() =>
@@ -90,13 +116,22 @@ function App() {
   const refreshInFlight = useRef(false)
 
   const coverageProfiles = setup.coverageProfiles
+  const directoryCountries = getCoverageCountries(coverageProfiles)
+  const directoryRegions = getCoverageRegions(coverageProfiles, directoryFilters.country)
+  const directoryProfiles = filterCoverageProfiles(
+    coverageProfiles,
+    directoryFilters.country,
+    directoryFilters.region,
+  )
+  const searchProfiles =
+    directoryFilters.country || directoryFilters.region ? directoryProfiles : coverageProfiles
   const selectedProfile =
     (selection.profileId ? findProfileById(coverageProfiles, selection.profileId) : null) ??
     coverageProfiles[0] ??
     null
   const selectedLocation = buildSelectedLocation(selectedProfile, selection)
   const briefing = selectedLocation ? buildLocationBriefing(selectedLocation) : null
-  const suggestions = getLocationSuggestions(coverageProfiles, deferredQuery)
+  const suggestions = getLocationSuggestions(searchProfiles, deferredQuery)
 
   useEffect(() => {
     writeAppSetup(setup)
@@ -105,18 +140,77 @@ function App() {
   useEffect(() => {
     if (coverageProfiles.length === 0) {
       if (selection.profileId !== null || query) {
-        setSelection(createInitialSelection(null))
-        setQuery('')
+        clearSelection()
+      }
+      if (directoryFilters.country || directoryFilters.region) {
+        setDirectoryFilters(createInitialDirectoryFilters(null))
       }
       return
     }
 
     if (!selectedProfile) {
-      const fallbackProfile = coverageProfiles[0]
-      setSelection(createInitialSelection(fallbackProfile))
-      setQuery(fallbackProfile.name)
+      selectProfile(coverageProfiles[0], 'directory')
     }
-  }, [coverageProfiles, query, selectedProfile, selection.profileId])
+  }, [
+    coverageProfiles,
+    directoryFilters.country,
+    directoryFilters.region,
+    query,
+    selectedProfile,
+    selection.profileId,
+  ])
+
+  useEffect(() => {
+    if (directoryFilters.country && !directoryCountries.includes(directoryFilters.country)) {
+      setDirectoryFilters(createInitialDirectoryFilters(selectedProfile))
+      return
+    }
+
+    if (directoryFilters.region && !directoryRegions.includes(directoryFilters.region)) {
+      setDirectoryFilters((current) => ({
+        ...current,
+        region: '',
+      }))
+    }
+  }, [
+    directoryCountries,
+    directoryFilters.country,
+    directoryFilters.region,
+    directoryRegions,
+    selectedProfile,
+  ])
+
+  function clearSelection(status?: string) {
+    setSelection(createInitialSelection(null))
+    setDirectoryFilters(createInitialDirectoryFilters(null))
+    setQuery('')
+
+    if (status) {
+      setStatusMessage(status)
+    }
+  }
+
+  function selectProfile(
+    profile: LocationProfile,
+    mode: LocationMode,
+    matchedText = profile.name,
+    status?: string,
+  ) {
+    setSelection({
+      profileId: profile.id,
+      mode,
+      matchedText,
+    })
+    setDirectoryFilters({
+      country: profile.country,
+      region: profile.region,
+    })
+    setQuery(matchedText)
+
+    if (status) {
+      setStatusMessage(status)
+    }
+  }
 
   const refreshCoverageProfiles = useEffectEvent(async (reason: 'manual' | 'poll' | 'bootstrap') => {
     if (coverageProfiles.length === 0 || refreshInFlight.current) {
@@ -124,12 +218,13 @@ function App() {
     }
 
     const profilesToSync = coverageProfiles
+    const profileIdsToSync = new Set(profilesToSync.map((profile) => profile.id))
     refreshInFlight.current = true
     setIsRefreshing(true)
     setSetup((current) => ({
       ...current,
       coverageProfiles: current.coverageProfiles.map((profile) =>
-        profilesToSync.some((candidate) => candidate.id === profile.id) ? markProfileSyncing(profile) : profile,
+        profileIdsToSync.has(profile.id) ? markProfileSyncing(profile) : profile,
       ),
     }))
 
@@ -164,7 +259,7 @@ function App() {
         } catch {
           if (reason === 'manual') {
             setStatusMessage(
-              `${syncSummary} New live alerts arrived, but the browser blocked audio playback until a user gesture enables it.`,
+              `${syncSummary} New live signals arrived, but the browser blocked audio playback until a user gesture enables it.`,
             )
           }
         }
@@ -207,25 +302,29 @@ function App() {
       return
     }
 
+    if (searchProfiles.length === 0) {
+      setStatusMessage('No configured coverage feeds are available inside the current country and region filters.')
+      return
+    }
+
     if (!query.trim()) {
       setStatusMessage('Enter a location code, city, district, or address hint to search coverage areas.')
       return
     }
 
-    const nextSuggestion = findBestSuggestion(coverageProfiles, query)
+    const nextSuggestion = findBestSuggestion(searchProfiles, query)
 
     if (!nextSuggestion) {
       setStatusMessage(`No coverage area matched "${query}". Try a place name, location code, or region.`)
       return
     }
 
-    setSelection({
-      profileId: nextSuggestion.profile.id,
-      mode: 'search',
-      matchedText: nextSuggestion.matchedText,
-    })
-    setQuery(nextSuggestion.matchedText)
-    setStatusMessage(`Coverage updated for ${nextSuggestion.profile.name}.`)
+    selectProfile(
+      nextSuggestion.profile,
+      'search',
+      nextSuggestion.matchedText,
+      `Coverage updated for ${nextSuggestion.profile.name}.`,
+    )
   }
 
   function handleSuggestionSelect(suggestionId: string) {
@@ -235,13 +334,12 @@ function App() {
       return
     }
 
-    setSelection({
-      profileId: nextSuggestion.profile.id,
-      mode: 'suggestion',
-      matchedText: nextSuggestion.matchedText,
-    })
-    setQuery(nextSuggestion.matchedText)
-    setStatusMessage(`Coverage updated for ${nextSuggestion.profile.name}.`)
+    selectProfile(
+      nextSuggestion.profile,
+      'suggestion',
+      nextSuggestion.matchedText,
+      `Coverage updated for ${nextSuggestion.profile.name}.`,
+    )
   }
 
   function handleCoverageSelect(profileId: string) {
@@ -251,25 +349,34 @@ function App() {
       return
     }
 
-    setSelection({
-      profileId: profile.id,
-      mode: 'directory',
-      matchedText: profile.name,
-    })
-    setQuery(profile.name)
-    setStatusMessage(`Coverage updated for ${profile.name}.`)
+    selectProfile(profile, 'directory', profile.name, `Coverage updated for ${profile.name}.`)
   }
 
-  function handleAddCoverage(input: {
-    name: string
-    region: string
-    country: string
-    aliases: string[]
-    locationCodes: string[]
-    latitude: number
-    longitude: number
-    briefingUrl: string
-  }) {
+  function handleDirectoryCountryChange(country: string) {
+    setDirectoryFilters({
+      country,
+      region: '',
+    })
+    setStatusMessage(
+      country ? `Browsing configured coverage feeds in ${country}.` : searchPrompt,
+    )
+  }
+
+  function handleDirectoryRegionChange(region: string) {
+    setDirectoryFilters((current) => ({
+      ...current,
+      region,
+    }))
+    setStatusMessage(
+      region
+        ? `Browsing configured coverage feeds in ${region}.`
+        : directoryFilters.country
+          ? `Browsing configured coverage feeds in ${directoryFilters.country}.`
+          : searchPrompt,
+    )
+  }
+
+  function handleAddCoverage(input: CoverageDraft) {
     const briefingUrl = resolveBriefingUrl(input.briefingUrl)
 
     if (
@@ -302,13 +409,12 @@ function App() {
       ...current,
       coverageProfiles: [...current.coverageProfiles, profile],
     }))
-    setSelection({
-      profileId: profile.id,
-      mode: 'directory',
-      matchedText: profile.name,
-    })
-    setQuery(profile.name)
-    setStatusMessage(`Coverage feed added for ${profile.name}. Running the first live sync now.`)
+    selectProfile(
+      profile,
+      'directory',
+      profile.name,
+      `Coverage feed added for ${profile.name}. Running the first live sync now.`,
+    )
   }
 
   function handleRemoveCoverage(profileId: string) {
@@ -321,24 +427,18 @@ function App() {
     }))
 
     if (nextProfiles.length === 0) {
-      setSelection(createInitialSelection(null))
-      setQuery('')
-      setStatusMessage('All coverage feeds were removed. Add a live feed to continue monitoring alerts.')
+      clearSelection('All coverage feeds were removed. Add a live feed to continue monitoring signals.')
       return
     }
 
     if (selection.profileId === profileId) {
-      const fallbackProfile = nextProfiles[0]
-      setSelection(createInitialSelection(fallbackProfile))
-      setQuery(fallbackProfile.name)
+      selectProfile(nextProfiles[0], 'directory')
     }
 
     setStatusMessage(`Removed ${removedProfile?.name ?? 'the selected'} coverage feed.`)
   }
 
-  function handleUpdateSettings(
-    next: Partial<Pick<AppSetup, 'pollingIntervalSeconds' | 'soundEnabled' | 'soundVolume' | 'unitSystem'>>,
-  ) {
+  function handleUpdateSettings(next: SetupSettingsUpdate) {
     setSetup((current) => ({
       ...current,
       pollingIntervalSeconds: Math.max(
@@ -379,7 +479,7 @@ function App() {
           <span className="brand-mark">EC</span>
           <span>
             <strong>Emergency Centre</strong>
-            <small>Open-source live hazard monitoring</small>
+            <small>Open-source multi-signal monitoring</small>
           </span>
         </a>
 
@@ -406,11 +506,18 @@ function App() {
           />
           <LocationConsole
             coverageProfiles={coverageProfiles}
+            directoryCountries={directoryCountries}
+            directoryRegions={directoryRegions}
+            directoryProfiles={directoryProfiles}
+            activeDirectoryCountry={directoryFilters.country}
+            activeDirectoryRegion={directoryFilters.region}
             query={query}
             suggestions={suggestions}
             statusMessage={statusMessage}
             selectedLocation={selectedLocation}
             isRefreshing={isRefreshing}
+            onDirectoryCountryChange={handleDirectoryCountryChange}
+            onDirectoryRegionChange={handleDirectoryRegionChange}
             onQueryChange={setQuery}
             onSearch={handleSearch}
             onCoverageSelect={handleCoverageSelect}
@@ -433,18 +540,18 @@ function App() {
 
         {briefing ? (
           <section id="signals" className="page-section content-grid">
-            <AlertFeed hazardFeed={briefing.hazardFeed} />
+            <AlertFeed signalFeed={briefing.signalFeed} />
             <SituationPanels briefing={briefing} unitSystem={setup.unitSystem} />
           </section>
         ) : (
           <section id="signals" className="page-section">
             <section className="panel">
               <div className="section-label">Signal Workspace</div>
-              <h2>Live alerts appear once a coverage feed is configured.</h2>
+              <h2>Live signals appear once a coverage feed is configured.</h2>
               <p className="panel-copy">
-                Add a real weather or public-alert feed in the setup section, then Emergency Centre
-                will pull hazards, weather snapshots, public bulletins, and readiness actions into
-                this workspace.
+                Add a real monitoring feed in the setup section, then Emergency Centre will pull
+                signals, weather snapshots, public bulletins, and readiness actions into this
+                workspace.
               </p>
             </section>
           </section>

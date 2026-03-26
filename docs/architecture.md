@@ -1,6 +1,6 @@
 # Architecture Notes
 
-Emergency Centre is a public monitoring client for real emergency briefing feeds.
+Emergency Centre is a public monitoring client with an optional local Node API for real multi-signal briefing feeds.
 
 ## Core product decision
 
@@ -22,13 +22,15 @@ That means the baseline app does not assume:
 ## High-level flow
 
 1. A user configures one or more coverage areas in the setup panel.
-2. The setup is saved to browser local storage.
-3. Search and directory selection operate on those configured coverage profiles.
-4. The app polls each profile's briefing URL on a fixed interval.
-5. Feed responses are normalized into the shared `LocationProfile` shape.
-6. Display preferences such as unit system are applied in the presentation layer.
-7. The selected profile is converted into a renderable briefing model.
-8. If new live alerts appear, the browser can play an alert tone.
+   The setup panel can now prefill coverage metadata from a built-in starter directory for supported countries.
+2. If the feed URL is blank, the starter flow can prefill a local demo API endpoint such as `/api/briefings/demo/:zoneId`.
+3. The setup is saved to browser local storage.
+4. Search and directory selection operate on those configured coverage profiles.
+5. The app polls each profile's briefing URL on a fixed interval.
+6. Feed responses are normalized into the shared `LocationProfile` shape.
+7. Display preferences such as unit system are applied in the presentation layer.
+8. The selected profile is converted into a renderable briefing model.
+9. If new live signals appear, the browser can play an alert tone.
 
 ## Frontend architecture
 
@@ -41,7 +43,7 @@ Owns the top-level state:
 - query text and autocomplete results
 - sync status messaging
 - polling lifecycle
-- audio alert triggers
+- audio signal triggers
 
 It is the coordination layer between setup, selection, feed refresh, and presentation components.
 
@@ -71,13 +73,13 @@ This module is intentionally small. If deployments need stronger validation, the
 
 Tracks operational sync behavior:
 
-- compares the previous and next live alert sets
-- counts newly arrived live alerts
+- compares the previous and next live signal sets
+- counts newly arrived live signals
 - creates user-facing sync summaries
 
 ### `src/lib/audio.ts`
 
-Provides the browser alert tone. It uses the Web Audio API so the project does not need to ship a bundled media file just to support alert playback.
+Provides the browser alert tone. It uses the Web Audio API so the project does not need to ship a bundled media file just to support signal playback.
 
 ### `src/lib/location.ts`
 
@@ -88,15 +90,47 @@ Handles coverage lookup and search:
 - place and region matches
 - ranked autocomplete suggestions
 - consistent selection metadata for directory and search flows
+- configured country and region filtering for the live coverage console
 
 This module is data-source agnostic. It operates on the configured coverage profile list rather than importing a global dataset.
+
+### `src/lib/coverageCatalog.ts`
+
+Provides the built-in setup directory:
+
+- curated starter zones for the United Kingdom and United States
+- hierarchical country, region, and coverage-area browsing
+- postcode and ZIP lookup against those starter zones
+- conversion of a starter zone into a coverage draft for the setup form
+
+### `server/index.ts`
+
+Hosts the optional local API server:
+
+- service discovery and health routes
+- coverage catalog routes
+- built-in demo briefing routes
+
+### `server/services/catalogService.ts`
+
+Provides API-safe catalog helpers:
+
+- country listing
+- region listing
+- zone listing
+- postcode and ZIP lookup
+- individual zone lookup
+
+### `server/services/demoBriefingService.ts`
+
+Generates normalized demo briefings for starter coverage zones so the frontend can be run end to end without requiring a third-party provider on day one.
 
 ### `src/lib/briefing.ts`
 
 Builds the render-ready briefing:
 
-- sorts hazard items by severity
-- calculates headline metrics
+- sorts signal items by severity
+- calculates headline metrics and category counts
 - exposes refresh-state messaging for the selected profile
 
 ### `src/components/`
@@ -115,7 +149,7 @@ The product intentionally avoids a built-in map dependency in the current baseli
 
 ## Trust boundary
 
-Emergency Centre is a public client. Feed URLs and feed responses are visible to the browser.
+Emergency Centre is a public client with an optional local API service. Feed URLs and feed responses are still visible to the browser when the browser fetches them directly.
 
 Implications:
 
@@ -123,6 +157,8 @@ Implications:
 - use a proxy or edge adapter for protected upstream providers
 - label source provenance clearly in the returned data
 - do not make unofficial feeds look identical to official ones
+
+The local API added in this repo is intentionally narrow. It does not act as a generic open proxy.
 
 ## Future optional modules
 

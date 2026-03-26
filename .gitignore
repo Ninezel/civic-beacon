@@ -3,6 +3,7 @@ node_modules/
 
 # Build artifacts
 dist/
+dist-server/
 coverage/
 
 # Local environment files

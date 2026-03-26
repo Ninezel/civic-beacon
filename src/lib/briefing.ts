@@ -1,4 +1,4 @@
-import type { HazardSignal, LocationBriefing, SelectedLocation, Severity } from '../types'
+import type { LocationBriefing, SelectedLocation, Severity, SignalItem } from '../types'
 
 const severityRank: Record<Severity, number> = {
   Critical: 0,
@@ -7,7 +7,7 @@ const severityRank: Record<Severity, number> = {
   Advisory: 3,
 }
 
-function sortHazards(feed: HazardSignal[]) {
+function sortSignals(feed: SignalItem[]) {
   return [...feed].sort((left, right) => severityRank[left.severity] - severityRank[right.severity])
 }
 
@@ -28,23 +28,27 @@ function describeRefresh(profile: SelectedLocation['profile']) {
 }
 
 export function buildLocationBriefing(selectedLocation: SelectedLocation): LocationBriefing {
-  const hazardFeed = sortHazards(selectedLocation.profile.hazards)
-  const criticalSignals = hazardFeed.filter((signal) => signal.severity === 'Critical').length
+  const signalFeed = sortSignals(selectedLocation.profile.signals)
+  const criticalSignals = signalFeed.filter((signal) => signal.severity === 'Critical').length
+  const monitoredCategories = new Set(signalFeed.map((signal) => signal.category)).size
   const areaLabel = selectedLocation.profile.name
 
   return {
     selectedLocation,
     headline:
       criticalSignals > 0
-        ? `${criticalSignals} critical alert${criticalSignals === 1 ? '' : 's'} need attention in ${areaLabel}.`
-        : `No critical alerts are active in ${areaLabel}. Continue monitoring local conditions.`,
+        ? `${criticalSignals} critical signal${criticalSignals === 1 ? '' : 's'} need attention in ${areaLabel}.`
+        : signalFeed.length > 0
+          ? `${signalFeed.length} live signal${signalFeed.length === 1 ? '' : 's'} are active in ${areaLabel}. Continue monitoring local conditions.`
+          : `No live signals are active in ${areaLabel}. Continue monitoring local conditions.`,
     metrics: {
-      activeSignals: hazardFeed.length,
+      activeSignals: signalFeed.length,
       criticalSignals,
+      monitoredCategories,
       sourceConfidence: selectedLocation.confidenceLabel,
       lastRefresh: describeRefresh(selectedLocation.profile),
     },
-    hazardFeed,
+    signalFeed,
     weather: selectedLocation.profile.weather,
     newsFeed: selectedLocation.profile.news,
     sourceHealth: selectedLocation.profile.sources,

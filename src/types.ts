@@ -1,11 +1,19 @@
-export type HazardCategory =
+export type SignalCategory =
+  | 'weather'
   | 'storm'
   | 'flood'
   | 'earthquake'
   | 'wildfire'
   | 'heat'
   | 'air-quality'
+  | 'infrastructure'
+  | 'transport'
+  | 'airspace'
   | 'public-safety'
+  | 'civil-defense'
+  | 'other'
+
+export type HazardCategory = SignalCategory
 
 export type Severity = 'Critical' | 'High' | 'Moderate' | 'Advisory'
 export type LocationMode = 'directory' | 'search' | 'suggestion'
@@ -31,13 +39,13 @@ export interface NewsItem {
   source: string
   publishedAt: string
   summary: string
-  scope: 'Local' | 'Regional' | 'National'
+  scope: 'Local' | 'Regional' | 'National' | 'Global'
 }
 
-export interface HazardSignal {
+export interface SignalItem {
   id: string
   title: string
-  category: HazardCategory
+  category: SignalCategory
   severity: Severity
   status: 'Live' | 'Monitoring' | 'Recovery'
   issuedAt: string
@@ -46,12 +54,25 @@ export interface HazardSignal {
   summary: string
   hotspotLabel: string
   reactionCount: number
+  tags: string[]
 }
+
+export type HazardSignal = SignalItem
 
 export interface SourceHealth {
   id: string
   name: string
-  type: 'Weather' | 'Seismic' | 'Flood' | 'News' | 'Civil'
+  type:
+    | 'Weather'
+    | 'Hydrology'
+    | 'Seismic'
+    | 'Wildfire'
+    | 'Airspace'
+    | 'Transport'
+    | 'Infrastructure'
+    | 'News'
+    | 'Civil'
+    | 'Other'
   status: 'Healthy' | 'Delayed' | 'Manual review'
   lastSync: string
   note: string
@@ -75,7 +96,7 @@ export interface LocationProfile {
   briefingUrl: string
   outlook: string
   weather: WeatherSnapshot
-  hazards: HazardSignal[]
+  signals: SignalItem[]
   news: NewsItem[]
   sources: SourceHealth[]
   actions: ReadinessAction[]
@@ -96,7 +117,7 @@ export interface LocationSuggestion {
 export interface LiveBriefingResponse {
   outlook: string
   weather: WeatherSnapshot
-  hazards: HazardSignal[]
+  signals: SignalItem[]
   news: NewsItem[]
   sources: SourceHealth[]
   actions: ReadinessAction[]
@@ -110,6 +131,40 @@ export interface AppSetup {
   unitSystem: UnitSystem
   coverageProfiles: LocationProfile[]
 }
+
+export interface CoverageDraft {
+  name: string
+  region: string
+  country: string
+  aliases: string[]
+  locationCodes: string[]
+  latitude: number
+  longitude: number
+  briefingUrl: string
+}
+
+export interface CoverageZoneTemplate {
+  id: string
+  name: string
+  region: string
+  regionCode: string
+  country: string
+  countryCode: string
+  aliases: string[]
+  locationCodes: string[]
+  coordinates: Coordinates
+}
+
+export interface CoverageZoneSuggestion {
+  id: string
+  zone: CoverageZoneTemplate
+  matchedText: string
+  matchKind: 'code' | 'alias' | 'place' | 'region' | 'country'
+}
+
+export type SetupSettingsUpdate = Partial<
+  Pick<AppSetup, 'pollingIntervalSeconds' | 'soundEnabled' | 'soundVolume' | 'unitSystem'>
+>
 
 export interface SelectedLocation {
   label: string
@@ -125,10 +180,11 @@ export interface LocationBriefing {
   metrics: {
     activeSignals: number
     criticalSignals: number
+    monitoredCategories: number
     sourceConfidence: string
     lastRefresh: string
   }
-  hazardFeed: HazardSignal[]
+  signalFeed: SignalItem[]
   weather: WeatherSnapshot
   newsFeed: NewsItem[]
   sourceHealth: SourceHealth[]

@@ -1,6 +1,6 @@
 # Security Model
 
-This document explains how the current Emergency Centre baseline approaches trust, privacy, and feed safety.
+This document explains how the current Emergency Centre baseline approaches trust, privacy, feed safety, and the optional local API layer.
 
 ## Core rule
 
@@ -36,6 +36,17 @@ Implications:
 - upstream API secrets must not be embedded in the client
 - any provider requiring authentication should be placed behind a proxy or edge adapter
 
+## Local API service boundary
+
+The repository now includes a small local Node API service used for starter catalog routes and demo briefings.
+
+Current posture:
+
+- it exposes only explicit catalog and demo endpoints
+- it does not accept arbitrary upstream URLs for proxying
+- it does not store user accounts or personal subscriptions
+- it should still be treated as a public service unless you place it behind your own network controls
+
 ## Current priority risks
 
 - misleading or spoofed upstream data
@@ -62,6 +73,7 @@ Anything user-generated in future modules must never be visually indistinguishab
 - show delayed or manual-review states explicitly
 - keep provider adapters replaceable
 - fail visibly when a feed breaks instead of silently serving stale confidence
+- keep any future server-side fetch route allowlisted; do not introduce an unrestricted open proxy
 
 ## Why the no-login baseline is safer right now
 

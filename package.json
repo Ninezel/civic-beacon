@@ -2,23 +2,33 @@
   "name": "emergency-centre",
   "private": false,
   "version": "0.1.0",
-  "description": "Open-source public hazard monitoring app for live emergency coverage feeds.",
+  "description": "Open-source public multi-signal monitoring app for live coverage feeds.",
   "license": "AGPL-3.0-or-later",
   "funding": "https://ko-fi.com/ninezel",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:client\"",
+    "dev:client": "vite",
+    "dev:api": "tsx watch server/index.ts",
+    "build": "tsc && vite build && tsc -p tsconfig.server.json",
+    "build:client": "tsc && vite build",
+    "build:api": "tsc -p tsconfig.server.json",
+    "start:api": "node dist-server/index.js",
     "preview": "vite preview"
   },
   "dependencies": {
+    "express": "^5.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.6.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"
   }

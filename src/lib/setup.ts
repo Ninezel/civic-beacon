@@ -42,6 +42,10 @@ function normalizeProfile(raw: unknown, index: number): LocationProfile | null {
   }
 
   const candidate = raw as Partial<LocationProfile>
+  const legacyCandidate = raw as {
+    hazards?: LocationProfile['signals']
+    signals?: LocationProfile['signals']
+  }
   const name = typeof candidate.name === 'string' ? candidate.name.trim() : ''
   const region = typeof candidate.region === 'string' ? candidate.region.trim() : ''
   const country = typeof candidate.country === 'string' ? candidate.country.trim() : ''
@@ -70,7 +74,9 @@ function normalizeProfile(raw: unknown, index: number): LocationProfile | null {
         ? candidate.outlook
         : 'Awaiting first live briefing sync.',
     weather: candidate.weather ?? createEmptyWeather(),
-    hazards: Array.isArray(candidate.hazards) ? candidate.hazards : [],
+    signals: Array.isArray(legacyCandidate.signals ?? legacyCandidate.hazards)
+      ? (legacyCandidate.signals ?? legacyCandidate.hazards)!
+      : [],
     news: Array.isArray(candidate.news) ? candidate.news : [],
     sources: Array.isArray(candidate.sources) ? candidate.sources : [],
     actions: Array.isArray(candidate.actions) ? candidate.actions : [],
@@ -106,7 +112,7 @@ export function createEmptyProfile(config: {
     briefingUrl: config.briefingUrl,
     outlook: 'Awaiting first live briefing sync.',
     weather: createEmptyWeather(),
-    hazards: [],
+    signals: [],
     news: [],
     sources: [],
     actions: [],
@@ -124,7 +130,7 @@ export function mergeLiveBriefing(
     ...profile,
     outlook: briefing.outlook,
     weather: briefing.weather,
-    hazards: briefing.hazards,
+    signals: briefing.signals,
     news: briefing.news,
     sources: briefing.sources,
     actions: briefing.actions,

@@ -398,7 +398,9 @@ h2 {
 .record-top,
 .record-footer,
 .search-row,
-.chip-row {
+.chip-row,
+.filter-row,
+.tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -485,12 +487,28 @@ h2 {
   background: rgba(255, 250, 244, 0.12);
 }
 
+.suggestion-item-light {
+  border-color: rgba(17, 44, 62, 0.08);
+  background: rgba(17, 44, 62, 0.03);
+  color: var(--text);
+}
+
+.suggestion-item-light:hover {
+  background: rgba(17, 44, 62, 0.08);
+}
+
 .suggestion-empty {
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px dashed rgba(255, 250, 244, 0.16);
   background: rgba(255, 250, 244, 0.06);
   color: rgba(248, 240, 230, 0.72);
+}
+
+.suggestion-empty-light {
+  border-color: rgba(17, 44, 62, 0.12);
+  background: rgba(17, 44, 62, 0.03);
+  color: var(--muted);
 }
 
 .suggestion-copy {
@@ -676,6 +694,52 @@ h2 {
   flex-direction: column;
   gap: 14px;
   margin-top: 18px;
+}
+
+.filter-row {
+  margin-top: 18px;
+}
+
+.filter-chip,
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 44, 62, 0.1);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.filter-chip {
+  padding: 9px 13px;
+  background: rgba(17, 44, 62, 0.04);
+  color: var(--text);
+}
+
+.filter-chip:hover {
+  transform: translateY(-1px);
+  background: rgba(17, 44, 62, 0.08);
+}
+
+.filter-chip-active {
+  border-color: rgba(34, 127, 141, 0.24);
+  background: rgba(34, 127, 141, 0.14);
+  color: var(--signal);
+}
+
+.tag-row {
+  margin-top: 12px;
+}
+
+.tag-chip {
+  padding: 6px 10px;
+  background: rgba(17, 44, 62, 0.05);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .record-card,
@@ -889,6 +953,27 @@ h2 {
   background: rgba(255, 255, 255, 0.7);
 }
 
+.coverage-catalog-card {
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(17, 44, 62, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(34, 127, 141, 0.08), transparent 28%),
+    rgba(255, 250, 244, 0.84);
+}
+
+.coverage-catalog-card h3 {
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.coverage-catalog-card .panel-copy {
+  margin-top: 10px;
+}
+
 .setup-side,
 .settings-stack,
 .setup-list {
@@ -899,6 +984,31 @@ h2 {
 .setup-side,
 .settings-stack {
   gap: 16px;
+}
+
+.catalog-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.catalog-lookup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.catalog-lookup .setup-field {
+  flex: 1 1 320px;
+}
+
+.catalog-suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .setup-list {
@@ -1086,6 +1196,12 @@ a:focus-visible {
 
   .setup-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .catalog-actions,
+  .catalog-lookup {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   h1 {

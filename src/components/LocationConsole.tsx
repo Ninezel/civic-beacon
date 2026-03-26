@@ -2,11 +2,18 @@ import type { LocationProfile, LocationSuggestion, SelectedLocation } from '../t
 
 interface LocationConsoleProps {
   coverageProfiles: LocationProfile[]
+  directoryCountries: string[]
+  directoryRegions: string[]
+  directoryProfiles: LocationProfile[]
+  activeDirectoryCountry: string
+  activeDirectoryRegion: string
   query: string
   suggestions: LocationSuggestion[]
   statusMessage: string
   selectedLocation: SelectedLocation | null
   isRefreshing: boolean
+  onDirectoryCountryChange: (country: string) => void
+  onDirectoryRegionChange: (region: string) => void
   onQueryChange: (nextValue: string) => void
   onSearch: () => void
   onCoverageSelect: (profileId: string) => void
@@ -21,39 +28,56 @@ const matchKindLabel = {
   country: 'Country',
 }
 
+function describeActiveStatus(selectedLocation: SelectedLocation | null, isRefreshing: boolean) {
+  if (isRefreshing) {
+    return 'Syncing live feeds'
+  }
+
+  if (selectedLocation?.profile.fetchStatus === 'error') {
+    return 'Feed issue'
+  }
+
+  if (selectedLocation?.profile.fetchStatus === 'live') {
+    return 'Live feed'
+  }
+
+  return 'Awaiting sync'
+}
+
 export function LocationConsole({
   coverageProfiles,
+  directoryCountries,
+  directoryRegions,
+  directoryProfiles,
+  activeDirectoryCountry,
+  activeDirectoryRegion,
   query,
   suggestions,
   statusMessage,
   selectedLocation,
   isRefreshing,
+  onDirectoryCountryChange,
+  onDirectoryRegionChange,
   onQueryChange,
   onSearch,
   onCoverageSelect,
   onSuggestionSelect,
 }: LocationConsoleProps) {
   const hasCoverage = coverageProfiles.length > 0
-  const activeStatus = isRefreshing
-    ? 'Syncing live feeds'
-    : selectedLocation?.profile.fetchStatus === 'error'
-      ? 'Feed issue'
-      : selectedLocation?.profile.fetchStatus === 'live'
-        ? 'Live feed'
-        : 'Awaiting sync'
+  const activeStatus = describeActiveStatus(selectedLocation, isRefreshing)
 
   return (
     <section id="coverage" className="panel control-panel">
       <div className="section-label">Coverage Search</div>
       <h2>
         {hasCoverage
-          ? 'Search a coverage area or choose one from the directory.'
-          : 'Set up a coverage feed to unlock local monitoring.'}
+          ? 'Search a monitoring area or browse by country, region, and coverage area.'
+          : 'Set up a coverage feed to unlock multi-signal monitoring.'}
       </h2>
       <p className="panel-copy">
         {hasCoverage
-          ? 'Search stays local to the browser in the open-source core. Try a postcode, ZIP code, city, district, neighborhood, or address hint.'
-          : 'Emergency Centre no longer ships with baked-in sample alerts. Add your own trusted feed in the setup section, then search configured coverage areas here.'}
+          ? 'Search stays local to the browser in the open-source core. Try a postcode, ZIP code, city, district, neighborhood, or address hint, or step through the directory filters below.'
+          : 'Emergency Centre does not ship with baked-in sample feeds. Add your own trusted monitoring feed in the setup section, then search configured coverage areas here.'}
       </p>
 
       {hasCoverage ? (
@@ -109,21 +133,71 @@ export function LocationConsole({
           </div>
 
           <div className="directory-row">
+            <label className="directory-label" htmlFor="coverage-country">
+              Country
+            </label>
+            <select
+              id="coverage-country"
+              className="coverage-select"
+              value={activeDirectoryCountry}
+              onChange={(event) => onDirectoryCountryChange(event.target.value)}
+            >
+              <option value="">All configured countries</option>
+              {directoryCountries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="directory-row">
+            <label className="directory-label" htmlFor="coverage-region">
+              Region / state
+            </label>
+            <select
+              id="coverage-region"
+              className="coverage-select"
+              value={activeDirectoryRegion}
+              onChange={(event) => onDirectoryRegionChange(event.target.value)}
+              disabled={!activeDirectoryCountry}
+            >
+              <option value="">All configured regions</option>
+              {directoryRegions.map((region) => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="directory-row">
             <label className="directory-label" htmlFor="coverage-directory">
               Coverage directory
             </label>
             <select
               id="coverage-directory"
               className="coverage-select"
-              value={selectedLocation?.profile.id ?? ''}
+              value={
+                directoryProfiles.some((profile) => profile.id === selectedLocation?.profile.id)
+                  ? (selectedLocation?.profile.id ?? '')
+                  : ''
+              }
               onChange={(event) => onCoverageSelect(event.target.value)}
             >
-              {coverageProfiles.map((profile) => (
+              <option value="">Choose configured coverage area</option>
+              {directoryProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.name} · {profile.region}
                 </option>
               ))}
             </select>
+
+            {directoryProfiles.length === 0 ? (
+              <div className="suggestion-empty">
+                No configured coverage feeds match the selected country and region yet.
+              </div>
+            ) : null}
           </div>
         </>
       ) : (
@@ -143,7 +217,7 @@ export function LocationConsole({
         <span className={`status-chip status-sync-${selectedLocation?.profile.fetchStatus ?? 'idle'}`}>
           {activeStatus}
         </span>
-        <span className="status-chip status-light">Weather + alerts + public safety</span>
+        <span className="status-chip status-light">Weather + civic + transport + airspace</span>
       </div>
 
       <div className="status-note">
@@ -165,7 +239,7 @@ export function LocationConsole({
         <strong>{selectedLocation?.label ?? 'Waiting for a configured coverage feed'}</strong>
         <span>
           {selectedLocation?.profile.outlook ??
-            'Once a live briefing feed is connected, the current outlook will appear here.'}
+            'Once a live briefing feed is connected, the current multi-signal outlook will appear here.'}
         </span>
       </div>
     </section>

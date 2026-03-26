@@ -15,11 +15,11 @@ Current behavior:
 - no mandatory Supabase dependency
 - no saved cross-device identity workflow in the core app
 
-## 2. Live alert setup
+## 2. Live monitoring setup
 
 Purpose:
 
-- let each deployment connect real alert feeds instead of relying on bundled demo data
+- let each deployment connect real monitoring feeds instead of relying on bundled demo data
 
 Current inputs:
 
@@ -36,11 +36,17 @@ Current behavior:
 
 - setup is stored locally in the browser
 - the app can add and remove coverage records
+- the app ships with a built-in starter directory for the United Kingdom and United States
+- users can pick `country -> region/state -> coverage area` to prefill a coverage record
+- users can search the starter directory by UK postcode or US ZIP code
+- starter zones can prefill a local demo API endpoint when the briefing URL field is blank
 - `Refresh feeds now` forces an immediate sync
-- the sound test button plays the current alert tone
+- the sound test button plays the current signal tone
 - unit display can be switched between metric and imperial
 - a built-in tutorial walks users through coverage metadata, feed URLs, verification, and operating settings
 - an in-app schema card shows the minimum JSON shape needed for a live feed
+- the preferred event list field is `signals`
+- the legacy `hazards` field remains accepted for backward compatibility
 
 ## 3. Coverage search
 
@@ -51,6 +57,9 @@ Purpose:
 Current inputs:
 
 - free-text query
+- configured country filter
+- configured region/state filter
+- configured coverage-area selector
 - autocomplete suggestions
 - coverage directory dropdown
 
@@ -67,9 +76,34 @@ Accepted search examples:
 Current implementation note:
 
 - search suggestions are generated from configured coverage profiles
+- the configured directory can be narrowed by `country -> region/state -> coverage area`
 - there is no built-in external geocoder in the open-source core
 
-## 4. Coverage sync states
+## 4. API services
+
+Purpose:
+
+- support self-hosted starter workflows without requiring an external provider immediately
+
+Current endpoints:
+
+- `GET /api`
+- `GET /api/health`
+- `GET /api/catalog/countries`
+- `GET /api/catalog/regions`
+- `GET /api/catalog/zones`
+- `GET /api/catalog/lookup`
+- `GET /api/catalog/zones/:zoneId`
+- `GET /api/briefings/demo/:zoneId`
+
+Current behavior:
+
+- the repo ships with a local Node API server
+- Vite proxies `/api/*` to the local API during development
+- built-in coverage zones can use demo briefing endpoints immediately
+- the API does not currently provide auth, persistence, or a generic proxy route
+
+## 5. Coverage sync states
 
 Purpose:
 
@@ -87,7 +121,7 @@ Current behavior:
 - feed errors are surfaced directly in the control panel
 - successful syncs update the overview metrics and downstream panels
 
-## 5. Polling and manual refresh
+## 6. Polling and manual refresh
 
 Purpose:
 
@@ -99,24 +133,24 @@ Current behavior:
 - feeds are automatically polled on the selected interval
 - the setup panel can force a manual refresh
 
-## 6. Sound alerts
+## 7. Sound alerts
 
 Purpose:
 
-- make newly arrived live alerts harder to miss
+- make newly arrived live signals harder to miss
 
 Current behavior:
 
 - audio alerts can be enabled or disabled
 - alert volume is configurable
-- the app compares the previous and next live alert sets
-- the browser tone plays when new live alerts arrive after the first successful sync
+- the app compares the previous and next live signal sets
+- the browser tone plays when new live signals arrive after the first successful sync
 
 Current limitation:
 
 - browser autoplay policy can block sound until the user interacts with the page
 
-## 7. Headline overview
+## 8. Headline overview
 
 Purpose:
 
@@ -131,7 +165,7 @@ Current contents:
 - current selection mode
 - last refresh summary
 
-## 8. Hazard feed
+## 9. Multi-signal feed
 
 Purpose:
 
@@ -148,16 +182,28 @@ Current card contents:
 - coverage
 - hotspot label
 - field reaction count
+- tag chips when the feed provides `tags`
 
 Current categories:
 
+- weather
 - storm
 - flood
 - earthquake
 - wildfire
 - heat
 - air quality
+- infrastructure
+- transport
+- airspace
 - public safety
+- civil defense
+- other
+
+Current behavior:
+
+- users can filter the feed by category using in-panel chips
+- the overview highlights how many categories are active in the selected coverage area
 
 Public-safety examples may include:
 
@@ -165,7 +211,7 @@ Public-safety examples may include:
 - search perimeters
 - police or civic safety notices
 
-## 9. Weather snapshot
+## 10. Environmental snapshot
 
 Purpose:
 
@@ -179,11 +225,11 @@ Current contents:
 - rain chance
 - short advisory text
 
-## 10. Situation news
+## 11. Context bulletins
 
 Purpose:
 
-- surface public briefing headlines around the selected coverage area
+- surface public and partner briefing headlines around the selected coverage area
 
 Current contents:
 
@@ -193,7 +239,7 @@ Current contents:
 - summary
 - scope label
 
-## 11. Readiness actions
+## 12. Readiness actions
 
 Purpose:
 
@@ -205,7 +251,7 @@ Current contents:
 - description
 - when-to-use guidance
 
-## 12. Source audit
+## 13. Source audit
 
 Purpose:
 
@@ -225,7 +271,7 @@ Current statuses:
 - Delayed
 - Manual review
 
-## 13. Open-source and security panel
+## 14. Open-source and security panel
 
 Purpose:
 
@@ -234,6 +280,6 @@ Purpose:
 Current contents:
 
 - no-login explanation
-- optional-auth explanation
 - replaceable feed-provider explanation
+- modular signal-schema explanation
 - Ko-Fi support link

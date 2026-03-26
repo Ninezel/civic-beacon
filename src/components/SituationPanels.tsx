@@ -1,16 +1,46 @@
+import type { ReactNode } from 'react'
+import { EmptyRecordCard } from './EmptyRecordCard'
 import { formatTemperature, formatWindSpeed } from '../lib/units'
-import type { LocationBriefing, UnitSystem } from '../types'
+import type { LocationBriefing, NewsItem, ReadinessAction, SourceHealth, UnitSystem } from '../types'
 
 interface SituationPanelsProps {
   briefing: LocationBriefing
   unitSystem: UnitSystem
 }
 
+interface StackSectionProps<T> {
+  title: string
+  heading: string
+  items: T[]
+  emptyTitle: string
+  emptyMessage: string
+  renderItem: (item: T) => ReactNode
+}
+
+function StackSection<T>({
+  title,
+  heading,
+  items,
+  emptyTitle,
+  emptyMessage,
+  renderItem,
+}: StackSectionProps<T>) {
+  return (
+    <section className="panel">
+      <div className="section-label">{title}</div>
+      <h2>{heading}</h2>
+      <div className="stack-list">
+        {items.length > 0 ? items.map(renderItem) : <EmptyRecordCard title={emptyTitle} message={emptyMessage} />}
+      </div>
+    </section>
+  )
+}
+
 export function SituationPanels({ briefing, unitSystem }: SituationPanelsProps) {
   return (
     <div className="situation-grid">
       <section className="panel">
-        <div className="section-label">Weather Snapshot</div>
+        <div className="section-label">Environmental Snapshot</div>
         <h2>{briefing.weather.condition}</h2>
         <div className="weather-grid">
           <article className="stat-tile">
@@ -29,84 +59,66 @@ export function SituationPanels({ briefing, unitSystem }: SituationPanelsProps) 
         <p className="panel-copy">{briefing.weather.advisory}</p>
       </section>
 
-      <section className="panel">
-        <div className="section-label">Situation News</div>
-        <h2>Public briefings around the selected location</h2>
-        <div className="stack-list">
-          {briefing.newsFeed.length > 0 ? (
-            briefing.newsFeed.map((news) => (
-              <article key={news.id} className="record-card compact-card">
-                <div className="record-top">
-                  <div>
-                    <strong>{news.headline}</strong>
-                    <p>
-                      {news.publishedAt} · {news.source}
-                    </p>
-                  </div>
-                  <span className="status-chip status-light">{news.scope}</span>
-                </div>
-                <p>{news.summary}</p>
-              </article>
-            ))
-          ) : (
-            <article className="record-card compact-card empty-record-card">
-              <strong>No public briefing items are active.</strong>
-              <p>This feed has not published local or regional news items in the current sync window.</p>
-            </article>
-          )}
-        </div>
-      </section>
+      <StackSection<NewsItem>
+        title="Context Bulletins"
+        heading="Public and partner briefings around the selected location"
+        items={briefing.newsFeed}
+        emptyTitle="No public or partner bulletins are active."
+        emptyMessage="This feed has not published local, regional, or partner briefing items in the current sync window."
+        renderItem={(news) => (
+          <article key={news.id} className="record-card compact-card">
+            <div className="record-top">
+              <div>
+                <strong>{news.headline}</strong>
+                <p>
+                  {news.publishedAt} · {news.source}
+                </p>
+              </div>
+              <span className="status-chip status-light">{news.scope}</span>
+            </div>
+            <p>{news.summary}</p>
+          </article>
+        )}
+      />
 
-      <section className="panel">
-        <div className="section-label">Readiness Actions</div>
-        <h2>What people should do next</h2>
-        <div className="stack-list">
-          {briefing.actions.length > 0 ? (
-            briefing.actions.map((action) => (
-              <article key={action.id} className="record-card compact-card">
-                <strong>{action.title}</strong>
-                <p>{action.description}</p>
-                <div className="record-footer">
-                  <span>{action.whenToUse}</span>
-                </div>
-              </article>
-            ))
-          ) : (
-            <article className="record-card compact-card empty-record-card">
-              <strong>No readiness actions were published.</strong>
-              <p>Add operational guidance to your feed if you want people to see clear next steps here.</p>
-            </article>
-          )}
-        </div>
-      </section>
+      <StackSection<ReadinessAction>
+        title="Response Actions"
+        heading="What people should do next"
+        items={briefing.actions}
+        emptyTitle="No response actions were published."
+        emptyMessage="Add operational guidance to your feed if you want people to see clear next steps here."
+        renderItem={(action) => (
+          <article key={action.id} className="record-card compact-card">
+            <strong>{action.title}</strong>
+            <p>{action.description}</p>
+            <div className="record-footer">
+              <span>{action.whenToUse}</span>
+            </div>
+          </article>
+        )}
+      />
 
-      <section className="panel">
-        <div className="section-label">Source Audit</div>
-        <h2>Signal health and trust posture</h2>
-        <div className="stack-list">
-          {briefing.sourceHealth.length > 0 ? (
-            briefing.sourceHealth.map((source) => (
-              <article key={source.id} className="record-card compact-card">
-                <div className="record-top">
-                  <div>
-                    <strong>{source.name}</strong>
-                    <p>
-                      {source.type} · last sync {source.lastSync}
-                    </p>
-                  </div>
-                  <span className="status-chip status-light">{source.status}</span>
-                </div>
-                <p>{source.note}</p>
-              </article>
-            ))
-          ) : (
-            <article className="record-card compact-card empty-record-card">
-              <strong>No source audit entries were published.</strong>
-              <p>Include source-health records in the feed if you want users to understand what is verified and fresh.</p>
-            </article>
-          )}
-        </div>
-      </section>
+      <StackSection<SourceHealth>
+        title="Source Audit"
+        heading="Signal health and trust posture"
+        items={briefing.sourceHealth}
+        emptyTitle="No source audit entries were published."
+        emptyMessage="Include source-health records in the feed if you want users to understand what is verified and fresh."
+        renderItem={(source) => (
+          <article key={source.id} className="record-card compact-card">
+            <div className="record-top">
+              <div>
+                <strong>{source.name}</strong>
+                <p>
+                  {source.type} · last sync {source.lastSync}
+                </p>
+              </div>
+              <span className="status-chip status-light">{source.status}</span>
+            </div>
+            <p>{source.note}</p>
+          </article>
+        )}
+      />
     </div>
   )
 }

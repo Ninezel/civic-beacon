@@ -36,11 +36,13 @@ export function OverviewPanel({
       <div className="section-label">Emergency Centre</div>
       <div className="overview-hero">
         <div>
-          <h1>{briefing ? 'Monitor live alerts without the noise.' : 'Connect live feeds and monitor real alerts.'}</h1>
+          <h1>
+            {briefing ? 'Monitor live public signals without the noise.' : 'Connect live feeds and monitor real signals.'}
+          </h1>
           <p className="lead-copy">
             {briefing
               ? briefing.headline
-              : 'Emergency Centre stays open source and feed-driven. Add real weather, flood, seismic, or public-alert endpoints to begin monitoring coverage areas.'}
+              : 'Emergency Centre stays open source and feed-driven. Add real weather, transport, infrastructure, airspace, or public-safety endpoints to begin monitoring coverage areas.'}
           </p>
         </div>
 
@@ -54,7 +56,11 @@ export function OverviewPanel({
               ? `${selectedProfile.region} · ${selectedProfile.country}`
               : 'Add a coverage area and briefing endpoint below.'}
           </p>
-          <p>{briefing && selectedProfile ? selectedProfile.locationCodes.join(' · ') : 'Weather, alerts, missing-person notices, and readiness actions can flow into one view.'}</p>
+          <p>
+            {briefing && selectedProfile
+              ? selectedProfile.locationCodes.join(' · ')
+              : 'Weather, transport, infrastructure, public-safety, and partner briefings can flow into one view.'}
+          </p>
           <p className="spotlight-outlook">
             {briefing && selectedProfile
               ? selectedProfile.outlook
@@ -85,16 +91,18 @@ export function OverviewPanel({
           <strong>{briefing?.metrics.criticalSignals ?? 0}</strong>
         </article>
         <article className="metric-card">
-          <span>Refresh state</span>
-          <strong>{refreshState}</strong>
+          <span>Signal categories</span>
+          <strong>{briefing?.metrics.monitoredCategories ?? 0}</strong>
         </article>
       </div>
 
       <div className="headline-strip">
         <span>
-          {soundEnabled ? 'Audio alerts enabled' : 'Audio alerts muted'} · {describeUnitSystem(unitSystem)}
+          {soundEnabled ? 'Audio signals enabled' : 'Audio signals muted'} · {describeUnitSystem(unitSystem)}
         </span>
-        <span>{briefing ? briefing.metrics.lastRefresh : 'Waiting for the first live sync'}</span>
+        <span>
+          {briefing ? `${refreshState} · ${briefing.metrics.lastRefresh}` : 'Waiting for the first live sync'}
+        </span>
       </div>
     </section>
   )
