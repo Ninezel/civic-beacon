@@ -1,105 +1,115 @@
-# Civic Beacon
+# Emergency Centre
 
-Open-source community resilience software for neighborhoods, apartment buildings, schools, and local organizations.
+Emergency Centre is an open-source public briefing app for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and civic emergency signals.
 
-Civic Beacon helps communities coordinate before, during, and after local disruptions. The current MVP is a PyQt desktop application focused on incident updates, household check-ins, requests and offers, dispatch tracking, and local support nodes.
+The open-source core is intentionally public and location-first:
+
+- no mandatory login
+- no mandatory Supabase dependency
+- no user account required to inspect local conditions
+- designed so self-hosters can swap in their own trusted data providers
 
 [Support ongoing development on Ko-Fi](https://ko-fi.com/ninezel)
 
-## Documentation
+## Product direction
 
-Start here if you are contributing to the codebase:
+Emergency Centre is being repositioned away from a private operator console and toward a public information surface that helps anyone:
+
+- search by postcode, ZIP code, address hint, district, or place
+- use autocomplete suggestions from a local coverage directory
+- switch between supported coverage areas from a dropdown
+- view public hazard signals
+- read weather, situation, and public-safety updates
+- check source health and trust posture
+- see recommended readiness actions
+
+## Why there is no login in the open-source core
+
+The default posture is public access because:
+
+- emergency information should not be gated behind an account wall
+- open-source self-hosters should be able to deploy the app without identity infrastructure
+- storing user identity and saved locations increases security and privacy obligations
+- public read-only access is the safest baseline
+
+Supabase is still a valid future extension for:
+
+- saved places
+- subscriptions
+- community reports
+- role-based moderation
+
+But it is intentionally not required for the first open-source release.
+
+## Documentation
 
 - [Architecture notes](./docs/architecture.md)
 - [Feature reference](./docs/feature-reference.md)
 - [Developer guide](./docs/developer-guide.md)
-
-## Why this exists
-
-Most local response work is still scattered across group chats, spreadsheets, phone trees, paper notes, and rumor. This project aims to provide a shared operations layer that is:
-
-- free to use
-- self-hostable
-- privacy-conscious
-- useful on ordinary days as well as emergency days
-
-## Current MVP
-
-- PyQt desktop command surface
-- Incident board with verified updates
-- Household check-in flow for residents
-- Request and volunteer-offer queues
-- Basic dispatch matching with assignment progression
-- Resource map for shelters, clinics, charging points, and local support nodes
-- Open-source architecture and principles surfaced in the app
+- [Security model](./docs/security-model.md)
+- [Contributing guide](./CONTRIBUTING.md)
 
 ## Repository layout
 
-- `main.py`: local entrypoint for running the desktop app
-- `civic_beacon/app.py`: Qt application bootstrap
-- `civic_beacon/main_window.py`: view layer and widget composition
-- `civic_beacon/controller.py`: state orchestration and workflow actions
-- `civic_beacon/models.py`: dataclasses and shared constants
-- `civic_beacon/seed.py`: in-memory dataset and matching rules
-- `civic_beacon/theme.py`: centralized Qt stylesheet
-- `docs/`: architecture, feature, and contributor documentation
+- `src/App.tsx`: top-level application shell
+- `src/components/`: UI sections for coverage search, alert feeds, situation panels, and OSS posture
+- `src/data/mockNetwork.ts`: mock hazard/news/weather/source data
+- `src/lib/location.ts`: autocomplete matching, directory lookup, and coverage selection helpers
+- `src/lib/briefing.ts`: briefing assembly for the selected location
+- `src/types.ts`: shared frontend types
+- `src/styles.css`: visual system and page styling
 
 ## Stack
 
-- Python 3.11+
-- PyQt6
-- Standard-library data model and seeded local state
+- React
+- TypeScript
+- Vite
+- Plain CSS
 
 ## Getting started
 
-```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
-```
-
-If your machine has a full `C:` drive, redirect temp and cache to `G:` before installing:
-
-```bash
+```powershell
+cd g:\Projects\emergency-centre
 $env:TEMP='g:\Projects\.tmp'
 $env:TMP='g:\Projects\.tmp'
-$env:PIP_CACHE_DIR='g:\Projects\.pip-cache'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm install
+npm run dev
 ```
 
-## Project direction
+For a production build:
 
-Near-term priorities:
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm run build
+```
 
-- add a real data model and persistence layer behind the desktop client
-- add authentication and role-based access
-- add SMS and email adapters
-- add a real incident map and geospatial filtering
-- add recovery workflows for claims, cleanup, and aid tracking
-- separate backend services from the operator desktop interface
+## Environment variables
 
-## Code quality goals
+The current open-source baseline does not require any environment variables.
 
-The current codebase is organized around a few explicit rules:
+See [.env.example](./.env.example) for the current placeholder policy. If optional
+modules such as accounts or subscriptions are introduced later, they should ship
+their own documented variables and setup steps.
 
-- keep workflow logic out of the window class
-- keep the seeded dataset in one place
-- prefer clear, named methods over clever abstractions
-- write docs for both product behavior and implementation behavior
-- make it easy to swap the in-memory state for persistence later
+## Open-source scope
 
-## Principles
+Current core:
 
-- Trust must be explicit. Verified updates are clearly labeled.
-- The platform must stay useful in quiet periods through drills, notices, and volunteer coordination.
-- Community coordination is not the same thing as emergency services.
-- Residents should not need modern hardware or perfect connectivity to participate.
+- public read-only hazard briefing experience
+- mock provider architecture
+- local typeahead coverage search and directory selection
+- support for weather, hazard, and public-safety bulletins
+- no user accounts
 
-## Supporting the project
+Planned optional modules:
 
-The software is free and open source. If it helps your community, support ongoing maintenance and development:
-
-- Ko-Fi: https://ko-fi.com/ninezel
+- Supabase-backed saved locations
+- subscriptions and notifications
+- moderation and operator review workflows
+- real provider adapters for weather, flood, seismic, and news sources
 
 ## License
 

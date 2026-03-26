@@ -1,24 +1,22 @@
-# Python bytecode and caches
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
-
-# Virtual environments
-.venv/
-venv/
-env/
+# Dependency directories
+node_modules/
 
 # Build artifacts
-build/
 dist/
-*.egg-info/
+coverage/
 
-# Local runtime files
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Python leftovers from earlier prototypes
+__pycache__/
+.venv/
+
+# Logs
 *.log
-*.local
+npm-debug.log*
 
 # Editor directories and files
 .vscode/*

@@ -1,47 +1,52 @@
 # Contributing
 
-Civic Beacon is an open-source public-good project. Contributions are welcome, but the bar should stay practical: reliability, accessibility, privacy, and clear operational behavior matter more than feature count.
+Emergency Centre is an open-source public-good project. Contributions should improve reliability, clarity, trust, accessibility, and security before they improve novelty.
 
 ## Before you start
 
-- Read the README and architecture notes.
-- Read `docs/feature-reference.md` before changing user-visible behavior.
-- Read `docs/developer-guide.md` before restructuring the codebase.
-- Prefer issues and pull requests that are small enough to review cleanly.
-- If a change affects trust, privacy, alerting, or incident workflow, explain the operational impact.
+- Read the [README](./README.md).
+- Read the [architecture notes](./docs/architecture.md).
+- Read the [feature reference](./docs/feature-reference.md) before changing visible behavior.
+- Read the [developer guide](./docs/developer-guide.md) before introducing new providers or build-time dependencies.
+- Read the [security model](./docs/security-model.md) before adding data collection, providers, or auth.
 
 ## Local setup
 
-```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-python main.py
+```powershell
+cd g:\Projects\emergency-centre
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm install
+npm run dev
 ```
 
-For a quick syntax check:
+## Verification
 
-```bash
-python -m compileall main.py civic_beacon
+```powershell
+$env:TEMP='g:\Projects\.tmp'
+$env:TMP='g:\Projects\.tmp'
+$env:npm_config_cache='g:\Projects\.npm-cache'
+npm run build
 ```
 
-## What to prioritize
+## Contribution rules
 
-- incident clarity over visual novelty
-- low-bandwidth and accessibility support
-- explicit data ownership and auditability
-- straightforward self-hosting
-- predictable desktop workflows for coordinators under stress
+- keep public access working without a login
+- treat Supabase as optional future infrastructure, not a hard dependency
+- keep provider integrations replaceable
+- document every user-visible behavior change
+- explain trust and security tradeoffs in pull requests
 
 ## Pull request guidance
 
-- Describe the problem first, then the implementation.
-- Include screenshots or short notes for interface changes.
-- Call out tradeoffs and missing follow-up work.
-- Avoid unrelated refactors in the same pull request.
+- Describe the problem before the implementation.
+- Call out data trust, privacy, or abuse implications.
+- Include screenshots for interface changes.
+- Avoid unrelated refactors in the same change.
 
 ## Maintainer support
 
-If this project helps your community, support ongoing work on Ko-Fi:
+If the project helps your community, support maintenance here:
 
 - https://ko-fi.com/ninezel
