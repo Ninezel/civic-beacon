@@ -1,52 +1,94 @@
 # API Services
 
-Emergency Centre includes an optional Node API server.
+Emergency Centre includes an optional local Node API service.
 
 Default local origin:
 
 - `http://localhost:8787`
 
+## What It Is For
+
+- exposing starter coverage catalog data
+- looking up built-in zones by postcode, ZIP, alias, place, region, or country
+- serving normalized demo briefings
+- giving self-hosters a simple backend baseline to extend
+
+## What It Is Not
+
+- not an auth server
+- not a persistence layer
+- not a generic open proxy
+- not a secrets vault for arbitrary providers
+
+## Step-By-Step: Run The API
+
+1. Open the repository root.
+2. Install dependencies with `npm install`.
+3. Start the API only with `npm run dev:api`.
+4. Open `http://localhost:8787/api/health`.
+5. Confirm you get a JSON response with `"ok": true`.
+
+## Step-By-Step: Run Frontend And API Together
+
+1. Install dependencies with `npm install`.
+2. Start both services with `npm run dev`.
+3. Open the frontend URL shown by Vite.
+4. Use the setup panel starter directory.
+5. Load a built-in zone without a custom feed URL to use the demo API endpoint automatically.
+
 ## Endpoints
 
-- `GET /api`
-- `GET /api/health`
-- `GET /api/catalog/countries`
-- `GET /api/catalog/regions?country=GB`
-- `GET /api/catalog/zones?country=GB&region=greater-london`
-- `GET /api/catalog/lookup?q=SW1A%201AA&country=GB`
-- `GET /api/catalog/zones/:zoneId`
-- `GET /api/briefings/demo/:zoneId`
+### `GET /api`
 
-## What The API Does
+Returns a small discovery document.
 
-- exposes the built-in starter catalog in a service-friendly format
-- lets clients look up starter zones by country, region, postcode, or ZIP
-- serves demo briefings so the UI can run end to end before a real upstream provider is connected
+### `GET /api/health`
 
-## What The API Does Not Do
+Returns the health response for the local API.
 
-- it does not implement user auth
-- it does not implement persistence
-- it does not implement a generic open proxy
-- it does not manage secrets for arbitrary third-party providers
+### `GET /api/catalog/countries`
 
-## Development
+Returns the built-in starter countries.
 
-Run frontend and API together:
+### `GET /api/catalog/regions?country=GB`
 
-```powershell
-$env:TEMP='g:\Projects\.tmp'
-$env:TMP='g:\Projects\.tmp'
-$env:npm_config_cache='g:\Projects\.npm-cache'
-npm install
-npm run dev
-```
+Returns starter regions for one country code.
 
-Run only the API:
+### `GET /api/catalog/zones?country=GB&region=greater-london`
 
-```powershell
-$env:TEMP='g:\Projects\.tmp'
-$env:TMP='g:\Projects\.tmp'
-$env:npm_config_cache='g:\Projects\.npm-cache'
-npm run dev:api
-```
+Returns starter zones for a country and optional region code.
+
+### `GET /api/catalog/lookup?q=SW1A%201AA&country=GB`
+
+Looks up starter zones by:
+
+- UK postcode
+- US ZIP
+- alias
+- place name
+- region
+- country
+
+### `GET /api/catalog/zones/:zoneId`
+
+Returns one built-in starter zone by ID.
+
+### `GET /api/briefings/demo/:zoneId`
+
+Returns a normalized demo briefing for the requested starter zone.
+
+## Environment Variables
+
+- `EC_API_PORT`
+- `EC_API_ORIGIN`
+
+See `.env.example` in the main repository.
+
+## Extension Guidance
+
+If you extend the API:
+
+- keep routes explicit
+- keep upstream providers allowlisted
+- document every new endpoint
+- do not add a generic user-supplied proxy route

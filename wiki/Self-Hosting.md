@@ -1,36 +1,32 @@
 # Self Hosting
 
-Emergency Centre can be run as:
+Emergency Centre can be self-hosted in two basic modes:
 
-- a frontend-only deployment
-- a frontend plus the optional local API service
+- frontend plus local API
+- frontend only, if every briefing URL is already public and browser-safe
 
-## Local Development
+## Recommended Local Setup
 
-```powershell
-cd g:\Projects\emergency-centre
-$env:TEMP='g:\Projects\.tmp'
-$env:TMP='g:\Projects\.tmp'
-$env:npm_config_cache='g:\Projects\.npm-cache'
-npm install
-npm run dev
-```
-
-This starts:
-
-- the Vite frontend
-- the Node API server
+1. Clone the repository.
+2. Run `npm install`.
+3. Run `npm run dev`.
+4. Confirm the frontend opens.
+5. Confirm `http://localhost:8787/api/health` responds.
 
 ## Production Build
 
+Run:
+
 ```powershell
-$env:TEMP='g:\Projects\.tmp'
-$env:TMP='g:\Projects\.tmp'
-$env:npm_config_cache='g:\Projects\.npm-cache'
 npm run build
 ```
 
-Run the API server:
+This produces:
+
+- `dist/` for the frontend
+- `dist-server/` for the API
+
+## Run The Built API
 
 ```powershell
 node dist-server/index.js
@@ -43,4 +39,9 @@ Optional variables:
 - `EC_API_PORT`
 - `EC_API_ORIGIN`
 
-See `.env.example` in the repository root.
+## Hosting Notes
+
+- keep secret-bearing provider integrations on the server side
+- do not rely on browser local storage for secrets
+- keep the API behind your own ingress and monitoring if you expose it publicly
+- document any custom provider adapters you add

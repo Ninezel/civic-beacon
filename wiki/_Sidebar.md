@@ -1,7 +1,10 @@
 ### Emergency Centre
 
 - [[Home]]
-- [[API Services]]
+- [[Quick Start]]
 - [[Coverage Zones]]
+- [[Connect Real Feeds]]
+- [[API Services]]
 - [[Self Hosting]]
 - [[Security Model]]
+- [[FAQ]]

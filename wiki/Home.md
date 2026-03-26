@@ -1,34 +1,69 @@
 # Emergency Centre Wiki
 
-Emergency Centre is an open-source multi-signal monitoring platform with:
+Emergency Centre is an open-source multi-signal monitoring platform built for public-first coverage monitoring.
 
-- a public-first React frontend
-- built-in UK and US starter coverage zones
+It currently includes:
+
+- a React frontend
+- built-in starter coverage zones for the United Kingdom and United States
 - postcode and ZIP lookup
-- an optional local Node API for catalog and demo briefing routes
+- an optional local Node API
+- demo briefing endpoints so the app works end to end before a real upstream provider is connected
 
 Project links:
 
 - Repository: https://github.com/Ninezel/emergency-centre
+- Issues: https://github.com/Ninezel/emergency-centre/issues
 - Ko-Fi: https://ko-fi.com/ninezel
 
-## Start Here
+## Best Starting Point
 
-- Read the main repository `README.md`
-- Review the API routes in `docs/api-reference.md`
-- Review the feed contract in `docs/feed-schema.md`
-- Review the security posture in `docs/security-model.md`
+If you just want to get the project running, follow [[Quick Start]].
+
+If you want to understand how the starter directory works, go to [[Coverage Zones]].
+
+If you want to wire in real providers, go to [[Connect Real Feeds]].
+
+If you want to run or extend the local API, go to [[API Services]].
+
+## Typical Paths
+
+### 1. I just want to see the app working
+
+Follow:
+
+1. [[Quick Start]]
+2. [[Coverage Zones]]
+
+### 2. I want to run the local API and demo briefings
+
+Follow:
+
+1. [[Quick Start]]
+2. [[API Services]]
+3. [[Self Hosting]]
+
+### 3. I want to connect real alert or monitoring feeds
+
+Follow:
+
+1. [[Quick Start]]
+2. [[Connect Real Feeds]]
+3. [[Security Model]]
 
 ## Core Concepts
 
 - `Coverage area`: a named monitoring zone with codes, aliases, coordinates, and a briefing URL
-- `Signals`: normalized weather, transport, infrastructure, public-safety, or other monitoring items
-- `Starter directory`: a built-in catalog for supported countries that helps bootstrap setup
-- `Demo API`: a local endpoint set that makes the starter zones runnable without a third-party feed on day one
+- `Signals`: normalized weather, infrastructure, transport, airspace, public-safety, or other monitoring items
+- `Starter directory`: built-in bootstrap coverage data for supported countries
+- `Demo briefing`: generated normalized feed data served by the local API
 
 ## Main Pages
 
-- [[API Services]]
+- [[Quick Start]]
 - [[Coverage Zones]]
+- [[Connect Real Feeds]]
+- [[API Services]]
 - [[Self Hosting]]
 - [[Security Model]]
+- [[FAQ]]

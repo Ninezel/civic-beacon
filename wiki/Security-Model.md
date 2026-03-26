@@ -4,7 +4,7 @@ Emergency Centre is public by default and does not require accounts in the open-
 
 ## Browser Layer
 
-The browser stores local setup such as:
+The browser currently stores:
 
 - configured coverage records
 - polling interval
@@ -24,4 +24,20 @@ Current posture:
 - no generic open proxy
 - no account storage
 
-If future server-side fetch routes are added, they should be allowlisted and documented clearly.
+## Step-By-Step: Safer Feed Integration
+
+1. Keep provider secrets on the server side.
+2. Normalize upstream data before it reaches users.
+3. Keep routes explicit and documented.
+4. Label source names clearly in the returned data.
+5. Show delayed or manual-review states visibly.
+6. Avoid making unofficial data look authoritative.
+
+## Future Risk Guardrails
+
+If future server-side fetch routes are added:
+
+- keep them allowlisted
+- document every upstream dependency
+- add rate limiting if public exposure increases
+- do not introduce an unrestricted proxy
