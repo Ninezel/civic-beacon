@@ -2,7 +2,7 @@
   "name": "emergency-centre",
   "private": false,
   "version": "0.1.0",
-  "description": "Open-source public hazard briefing app for storms, flooding, earthquakes, and local emergency signals.",
+  "description": "Open-source public hazard monitoring app for live emergency coverage feeds.",
   "license": "AGPL-3.0-or-later",
   "funding": "https://ko-fi.com/ninezel",
   "type": "module",

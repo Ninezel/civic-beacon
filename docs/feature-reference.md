@@ -39,6 +39,8 @@ Current behavior:
 - `Refresh feeds now` forces an immediate sync
 - the sound test button plays the current alert tone
 - unit display can be switched between metric and imperial
+- a built-in tutorial walks users through coverage metadata, feed URLs, verification, and operating settings
+- an in-app schema card shows the minimum JSON shape needed for a live feed
 
 ## 3. Coverage search
 

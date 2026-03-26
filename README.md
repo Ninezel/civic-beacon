@@ -1,83 +1,58 @@
 # Emergency Centre
 
-Emergency Centre is an open-source web app for monitoring real emergency coverage feeds. It is built for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and other public-safety alerts.
+Emergency Centre is an open-source web application for monitoring live public hazard briefings across configurable coverage areas. It is designed for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and other public-safety alerts.
 
-The open-source core is intentionally:
+The project is intentionally:
 
-- public
-- usable without login
+- public by default
 - self-hostable
-- feed-driven instead of vendor-locked
+- feed-driven rather than vendor-locked
+- usable without mandatory login
 
 [Support ongoing development on Ko-Fi](https://ko-fi.com/ninezel)
 
-## Current product model
+## What It Does
 
-Emergency Centre no longer ships with baked-in mock coverage data. Instead, each deployment configures its own coverage areas and feed URLs through the in-app setup surface.
+Emergency Centre lets a deployment define one or more coverage areas and connect each one to a live JSON briefing feed.
 
-Each configured coverage area includes:
+Each coverage record includes:
 
-- name
-- region
-- country
-- location codes such as postcodes or ZIP codes
+- a public-facing place name
+- region and country metadata
+- location codes such as postcodes, ZIP codes, or other local code systems
 - aliases or address hints for search
 - coordinates for the coverage record
-- a live JSON briefing endpoint
+- a live briefing endpoint
 
-The app stores that configuration locally in the browser, polls the configured feeds, and renders the normalized weather, hazard, public-briefing, and readiness data.
+The application stores that configuration locally in the browser, polls the configured feeds, and renders a public monitoring surface for weather, hazards, public briefings, source health, and readiness actions.
 
-## Core features
+## Core Capabilities
 
-- no mandatory login in the open-source core
 - coverage search by postcode, ZIP code, city, district, alias, or code
-- coverage directory dropdown
+- coverage directory dropdown for known supported areas
 - live polling for configured briefing feeds
 - browser sound alerts when new live alerts appear
 - metric or imperial display preference
+- built-in setup tutorial and in-app feed-schema reference
 - manual feed refresh and sound test controls
 - hazard, weather, public-briefing, source-health, and readiness panels
-- local persistence for coverage setup and monitoring preferences
+- open-source baseline with no mandatory login
 
-## Feed setup quick start
+## Operating Model
 
-1. Start the app locally.
-2. Open the `Live Alert Setup` section.
-3. Add a coverage area with its metadata and briefing feed URL.
-4. Make sure the feed returns the JSON shape documented in [docs/feed-schema.md](./docs/feed-schema.md).
-5. If the upstream provider needs secrets or blocks browser requests, put a proxy or adapter in front of it.
-6. Use `Refresh feeds now` to run the first sync.
+Emergency Centre does not ship with bundled live alert data.
 
-## Documentation
+Instead:
 
-- [Architecture notes](./docs/architecture.md)
-- [Feature reference](./docs/feature-reference.md)
-- [Developer guide](./docs/developer-guide.md)
-- [Feed schema](./docs/feed-schema.md)
-- [Security model](./docs/security-model.md)
-- [Contributing guide](./CONTRIBUTING.md)
+1. A user configures a coverage area in the setup section.
+2. The coverage area points to a live JSON briefing endpoint.
+3. The browser polls that endpoint on the configured interval.
+4. The selected coverage area is rendered into the monitoring interface.
+5. Search and directory selection operate only on the configured coverage records.
 
-## Repository layout
+This keeps the core application generic and self-hostable while allowing each deployment to choose its own trusted data sources.
 
-- `src/App.tsx`: top-level application shell and state orchestration
-- `src/components/`: overview, coverage, setup, alert, and information panels
-- `src/lib/location.ts`: coverage matching, suggestion ranking, and selection helpers
-- `src/lib/briefing.ts`: briefing assembly for the selected coverage area
-- `src/lib/feed.ts`: live feed fetching and baseline response validation
-- `src/lib/setup.ts`: local setup persistence and coverage profile hydration
-- `src/lib/alertSync.ts`: live-alert diffing and sync summary helpers
-- `src/lib/audio.ts`: browser alert sound playback
-- `src/types.ts`: shared frontend contracts
-- `src/styles.css`: visual system and responsive layout
-
-## Stack
-
-- React
-- TypeScript
-- Vite
-- Plain CSS
-
-## Getting started
+## Quick Start
 
 ```powershell
 cd g:\Projects\emergency-centre
@@ -88,7 +63,7 @@ npm install
 npm run dev
 ```
 
-For a production build:
+Create a production build with:
 
 ```powershell
 $env:TEMP='g:\Projects\.tmp'
@@ -97,29 +72,65 @@ $env:npm_config_cache='g:\Projects\.npm-cache'
 npm run build
 ```
 
-## Environment variables
+## Feed Requirements
+
+Each coverage area must point to a JSON briefing feed. The minimum required response fields are:
+
+- `outlook`
+- `weather`
+
+The recommended full contract is documented in [docs/feed-schema.md](./docs/feed-schema.md).
+
+Important constraints:
+
+- do not expose private API keys in a client-visible feed URL
+- use a proxy or edge adapter if the upstream provider needs secrets
+- use a proxy if the upstream does not allow browser access
+- keep alert IDs stable so new-alert sound detection works correctly
+
+## Documentation
+
+- [Architecture notes](./docs/architecture.md)
+- [Feature reference](./docs/feature-reference.md)
+- [Developer guide](./docs/developer-guide.md)
+- [Feed schema](./docs/feed-schema.md)
+- [Security model](./docs/security-model.md)
+- [Contributing guide](./CONTRIBUTING.md)
+
+## Repository Layout
+
+- `src/App.tsx`: top-level application shell and state orchestration
+- `src/components/`: UI surfaces for overview, coverage selection, setup, alerts, and supporting information
+- `src/lib/location.ts`: coverage matching, suggestion ranking, and selection helpers
+- `src/lib/briefing.ts`: briefing assembly for the selected coverage area
+- `src/lib/feed.ts`: live feed fetching and baseline response validation
+- `src/lib/setup.ts`: local setup persistence and coverage profile hydration
+- `src/lib/alertSync.ts`: live-alert diffing and sync summary helpers
+- `src/lib/audio.ts`: browser alert sound playback
+- `src/lib/units.ts`: display-layer unit conversion for weather output
+- `src/types.ts`: shared frontend contracts
+- `src/styles.css`: visual system and responsive layout
+
+## Environment And Security Notes
 
 The open-source core currently requires no environment variables.
 
-If you add live providers that need secrets, do not expose those secrets in the public client. Put them behind a server or edge adapter and document that setup separately.
+The default baseline also does not require:
 
-## Open-source scope
+- Supabase
+- user accounts
+- private backend storage
 
-Current core:
+If a live provider needs secrets, keep them out of the public client and document the adapter or proxy layer explicitly.
 
-- public monitoring without accounts
-- user-configured coverage areas
-- browser-local setup persistence
-- live feed polling
-- alert sound playback
-- replaceable feed providers
-
-Deferred optional modules:
+## Planned Optional Extensions
 
 - saved places across devices
-- subscriptions and outbound notifications
+- outbound notifications and subscriptions
 - moderator or operator workflows
 - optional auth-backed personalization
+
+These are intentionally deferred so the baseline stays simple, public, and easy to self-host.
 
 ## License
 

@@ -243,6 +243,12 @@ button {
   color: rgba(248, 240, 230, 0.76);
 }
 
+.control-panel .support-link {
+  border-color: rgba(255, 250, 244, 0.16);
+  background: rgba(255, 250, 244, 0.1);
+  color: #fffaf4;
+}
+
 .setup-panel .panel-copy {
   max-width: 72ch;
 }
@@ -750,6 +756,124 @@ h2 {
   max-width: 70ch;
 }
 
+.tutorial-card {
+  margin-top: 20px;
+}
+
+.tutorial-heading {
+  align-items: center;
+}
+
+.tutorial-step-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.tutorial-step-button {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(17, 44, 62, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--text);
+  text-align: left;
+}
+
+.tutorial-step-button span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(17, 44, 62, 0.08);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tutorial-step-button strong {
+  font-size: 0.98rem;
+}
+
+.tutorial-step-button-active {
+  border-color: rgba(34, 127, 141, 0.24);
+  background: linear-gradient(180deg, rgba(220, 236, 240, 0.92), rgba(255, 250, 244, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(34, 127, 141, 0.08);
+}
+
+.tutorial-step-button-active span {
+  background: rgba(34, 127, 141, 0.14);
+  color: var(--signal);
+}
+
+.tutorial-body {
+  margin-top: 18px;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(17, 44, 62, 0.08);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.tutorial-body h3,
+.tutorial-schema-card h3 {
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.tutorial-checklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.tutorial-checklist-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 44, 62, 0.08);
+  background: rgba(17, 44, 62, 0.03);
+  color: var(--text);
+}
+
+.tutorial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.ghost-button:disabled,
+.primary-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tutorial-schema-card {
+  margin-top: 12px;
+}
+
+.tutorial-schema-snippet {
+  overflow: auto;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #132c3f;
+  color: #eef7fb;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
 .setup-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
@@ -926,7 +1050,8 @@ a:focus-visible {
   .info-grid,
   .weather-grid,
   .overview-hero,
-  .setup-grid {
+  .setup-grid,
+  .tutorial-step-strip {
     grid-template-columns: 1fr;
   }
 }
@@ -949,7 +1074,8 @@ a:focus-visible {
   .panel-heading,
   .search-row,
   .record-footer,
-  .setup-list-item {
+  .setup-list-item,
+  .tutorial-actions {
     flex-direction: column;
   }
 

@@ -106,6 +106,7 @@ The UI is split into focused surfaces:
 - `OverviewPanel`
 - `LocationConsole`
 - `SetupPanel`
+- `SetupTutorial`
 - `AlertFeed`
 - `SituationPanels`
 - `OpenSourcePanel`

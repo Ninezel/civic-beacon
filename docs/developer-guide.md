@@ -26,6 +26,7 @@ npm run build
 
 - `src/App.tsx`: state orchestration, polling, selection, and top-level composition
 - `src/components/`: isolated UI sections
+- `src/components/SetupTutorial.tsx`: in-app onboarding for first-time feed setup
 - `src/lib/setup.ts`: persisted setup and profile lifecycle helpers
 - `src/lib/feed.ts`: live feed fetching
 - `src/lib/alertSync.ts`: sync summaries and new-alert detection

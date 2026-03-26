@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SetupTutorial } from './SetupTutorial'
 import type { AppSetup, LocationProfile } from '../types'
 
 interface SetupPanelProps {
@@ -91,6 +92,8 @@ export function SetupPanel({
         access, place a small proxy or adapter in front of it.
       </p>
 
+      <SetupTutorial />
+
       <div className="setup-grid">
         <form className="setup-form" onSubmit={handleSubmit}>
           <div className="setup-field-grid">
@@ -131,15 +134,15 @@ export function SetupPanel({
               <span>Longitude</span>
               <input value={formState.longitude} onChange={(event) => updateField('longitude', event.target.value)} type="number" step="0.0001" required />
             </label>
-              <label className="setup-field setup-field-wide">
-                <span>Briefing feed URL</span>
-                <input
-                  value={formState.briefingUrl}
-                  onChange={(event) => updateField('briefingUrl', event.target.value)}
-                  placeholder="/api/alerts/london or https://alerts.example.com/api/london.json"
-                  required
-                />
-              </label>
+            <label className="setup-field setup-field-wide">
+              <span>Briefing feed URL</span>
+              <input
+                value={formState.briefingUrl}
+                onChange={(event) => updateField('briefingUrl', event.target.value)}
+                placeholder="/api/alerts/london or https://alerts.example.com/api/london.json"
+                required
+              />
+            </label>
           </div>
 
           <button className="primary-button" type="submit">
@@ -208,6 +211,29 @@ export function SetupPanel({
               <button className="ghost-button" type="button" onClick={onTestSound}>
                 Test alert sound
               </button>
+            </div>
+          </div>
+
+          <div className="settings-card">
+            <div id="setup-feed-schema" className="section-label">Feed Schema Essentials</div>
+            <div className="tutorial-schema-card">
+              <h3>Minimum JSON response</h3>
+              <p className="panel-copy">
+                Every live feed should return `outlook` and `weather` at minimum. Hazard, news,
+                source, and action arrays are optional but recommended.
+              </p>
+              <pre className="tutorial-schema-snippet">
+{`{
+  "outlook": "Heavy rain remains the main concern.",
+  "weather": {
+    "temperatureC": 7,
+    "condition": "Heavy rain bands",
+    "windKph": 38,
+    "rainChance": 92,
+    "advisory": "Flash flooding is possible on low roads."
+  }
+}`}
+              </pre>
             </div>
           </div>
 
