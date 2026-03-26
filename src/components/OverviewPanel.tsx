@@ -1,7 +1,12 @@
-import type { LocationBriefing } from '../types'
+import { describeUnitSystem } from '../lib/units'
+import type { LocationBriefing, UnitSystem } from '../types'
 
 interface OverviewPanelProps {
-  briefing: LocationBriefing
+  briefing: LocationBriefing | null
+  coverageCount: number
+  isRefreshing: boolean
+  soundEnabled: boolean
+  unitSystem: UnitSystem
 }
 
 const modeLabel = {
@@ -10,55 +15,86 @@ const modeLabel = {
   suggestion: 'Autocomplete match',
 }
 
-export function OverviewPanel({ briefing }: OverviewPanelProps) {
+export function OverviewPanel({
+  briefing,
+  coverageCount,
+  isRefreshing,
+  soundEnabled,
+  unitSystem,
+}: OverviewPanelProps) {
+  const selectedProfile = briefing?.selectedLocation.profile ?? null
+  const refreshState = isRefreshing
+    ? 'Syncing'
+    : selectedProfile?.fetchStatus === 'error'
+      ? 'Needs attention'
+      : selectedProfile?.fetchStatus === 'live'
+        ? 'Live'
+        : 'Waiting'
+
   return (
     <section className="panel overview-panel">
       <div className="section-label">Emergency Centre</div>
       <div className="overview-hero">
         <div>
-          <h1>Monitor local emergency coverage fast.</h1>
-          <p className="lead-copy">{briefing.headline}</p>
+          <h1>{briefing ? 'Monitor live alerts without the noise.' : 'Connect live feeds and monitor real alerts.'}</h1>
+          <p className="lead-copy">
+            {briefing
+              ? briefing.headline
+              : 'Emergency Centre stays open source and feed-driven. Add real weather, flood, seismic, or public-alert endpoints to begin monitoring coverage areas.'}
+          </p>
         </div>
 
         <aside className="overview-spotlight">
-          <span className="status-chip status-accent">Live public briefing</span>
-          <strong>{briefing.selectedLocation.label}</strong>
+          <span className={`status-chip ${briefing ? 'status-accent' : 'status-light'}`}>
+            {briefing ? 'Live public briefing' : 'Setup required'}
+          </span>
+          <strong>{briefing ? briefing.selectedLocation.label : 'No coverage feed selected yet'}</strong>
           <p>
-            {briefing.selectedLocation.profile.region} · {briefing.selectedLocation.profile.country}
+            {briefing && selectedProfile
+              ? `${selectedProfile.region} · ${selectedProfile.country}`
+              : 'Add a coverage area and briefing endpoint below.'}
           </p>
-          <p>{briefing.selectedLocation.profile.locationCodes.join(' · ')}</p>
-          <p className="spotlight-outlook">{briefing.selectedLocation.profile.outlook}</p>
+          <p>{briefing && selectedProfile ? selectedProfile.locationCodes.join(' · ') : 'Weather, alerts, missing-person notices, and readiness actions can flow into one view.'}</p>
+          <p className="spotlight-outlook">
+            {briefing && selectedProfile
+              ? selectedProfile.outlook
+              : 'No feed data is bundled into the open-source core. Communities bring their own trusted feeds.'}
+          </p>
         </aside>
       </div>
 
       <div className="overview-ribbon">
         <span className="overview-ribbon-label">Current mode</span>
-        <strong>{modeLabel[briefing.selectedLocation.mode]}</strong>
-        <span>{briefing.metrics.sourceConfidence}</span>
+        <strong>{briefing ? modeLabel[briefing.selectedLocation.mode] : 'Coverage setup'}</strong>
+        <span>
+          {briefing ? briefing.metrics.sourceConfidence : `${coverageCount} configured coverage area${coverageCount === 1 ? '' : 's'}`}
+        </span>
       </div>
 
       <div className="metric-grid">
         <article className="metric-card">
+          <span>Coverage feeds</span>
+          <strong>{coverageCount}</strong>
+        </article>
+        <article className="metric-card">
           <span>Active signals</span>
-          <strong>{briefing.metrics.activeSignals}</strong>
+          <strong>{briefing?.metrics.activeSignals ?? 0}</strong>
         </article>
         <article className="metric-card">
           <span>Critical signals</span>
-          <strong>{briefing.metrics.criticalSignals}</strong>
-        </article>
-        <article className="metric-card">
-          <span>Selected area</span>
-          <strong>{briefing.selectedLocation.profile.name}</strong>
+          <strong>{briefing?.metrics.criticalSignals ?? 0}</strong>
         </article>
         <article className="metric-card">
           <span>Refresh state</span>
-          <strong>Live mock</strong>
+          <strong>{refreshState}</strong>
         </article>
       </div>
 
       <div className="headline-strip">
-        <span>{briefing.metrics.sourceConfidence}</span>
-        <span>{briefing.metrics.lastRefresh}</span>
+        <span>
+          {soundEnabled ? 'Audio alerts enabled' : 'Audio alerts muted'} · {describeUnitSystem(unitSystem)}
+        </span>
+        <span>{briefing ? briefing.metrics.lastRefresh : 'Waiting for the first live sync'}</span>
       </div>
     </section>
   )

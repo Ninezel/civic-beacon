@@ -9,6 +9,8 @@ export type HazardCategory =
 
 export type Severity = 'Critical' | 'High' | 'Moderate' | 'Advisory'
 export type LocationMode = 'directory' | 'search' | 'suggestion'
+export type FeedFetchStatus = 'idle' | 'syncing' | 'live' | 'error'
+export type UnitSystem = 'metric' | 'imperial'
 
 export interface Coordinates {
   lat: number
@@ -70,12 +72,16 @@ export interface LocationProfile {
   aliases: string[]
   locationCodes: string[]
   coordinates: Coordinates
+  briefingUrl: string
   outlook: string
   weather: WeatherSnapshot
   hazards: HazardSignal[]
   news: NewsItem[]
   sources: SourceHealth[]
   actions: ReadinessAction[]
+  lastUpdatedAt: string
+  fetchStatus: FeedFetchStatus
+  fetchError: string | null
 }
 
 export interface LocationSuggestion {
@@ -87,10 +93,22 @@ export interface LocationSuggestion {
   matchKind: 'code' | 'alias' | 'place' | 'region' | 'country'
 }
 
-export interface HazardProvider {
-  name: string
-  getCoverageProfiles: () => LocationProfile[]
-  getDefaultProfile: () => LocationProfile
+export interface LiveBriefingResponse {
+  outlook: string
+  weather: WeatherSnapshot
+  hazards: HazardSignal[]
+  news: NewsItem[]
+  sources: SourceHealth[]
+  actions: ReadinessAction[]
+  refreshedAt?: string
+}
+
+export interface AppSetup {
+  pollingIntervalSeconds: number
+  soundEnabled: boolean
+  soundVolume: number
+  unitSystem: UnitSystem
+  coverageProfiles: LocationProfile[]
 }
 
 export interface SelectedLocation {

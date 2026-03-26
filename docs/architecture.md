@@ -1,134 +1,135 @@
 # Architecture Notes
 
-Emergency Centre is now a public web application, not a private desktop command console.
+Emergency Centre is a public monitoring client for real emergency briefing feeds.
 
 ## Core product decision
 
 The open-source core is intentionally:
 
 - public
-- read-only
-- location-first
-- deployable without identity infrastructure
+- feed-driven
+- usable without login
+- deployable without Supabase
+- configurable by local operators or self-hosters
 
-This means the default app should work without:
+That means the baseline app does not assume:
 
 - user accounts
-- Supabase
+- private profiles
 - server-side sessions
-- stored personal profiles
+- vendor-managed feed infrastructure
+
+## High-level flow
+
+1. A user configures one or more coverage areas in the setup panel.
+2. The setup is saved to browser local storage.
+3. Search and directory selection operate on those configured coverage profiles.
+4. The app polls each profile's briefing URL on a fixed interval.
+5. Feed responses are normalized into the shared `LocationProfile` shape.
+6. Display preferences such as unit system are applied in the presentation layer.
+7. The selected profile is converted into a renderable briefing model.
+8. If new live alerts appear, the browser can play an alert tone.
 
 ## Frontend architecture
 
 ### `src/App.tsx`
 
-Owns the top-level page state:
+Owns the top-level state:
 
-- current location query
-- selected location
-- search status message
+- persisted setup
+- selected coverage record
+- query text and autocomplete results
+- sync status messaging
+- polling lifecycle
+- audio alert triggers
 
-It coordinates the main interaction flows:
+It is the coordination layer between setup, selection, feed refresh, and presentation components.
 
-- search submission
-- autocomplete suggestion selection
-- coverage directory selection
-
-### `src/data/mockNetwork.ts`
-
-Contains the current mock provider data:
-
-- location coverage profiles
-- hazard signals
-- weather snapshots
-- situation news
-- source-health records
-- readiness actions
-
-This is the current stand-in for real provider adapters.
-
-### `src/providers/mockProvider.ts`
-
-Defines the current provider contract boundary:
-
-- exposes the coverage profiles used by the UI
-- centralizes the default profile selection
-- gives future maintainers a clear seam for live integrations
-
-### `src/lib/location.ts`
+### `src/lib/setup.ts`
 
 Responsible for:
 
-- matching search text to known location profiles
-- generating ranked autocomplete suggestions
-- resolving a selected coverage area from the provider dataset
-- creating consistent selection metadata for search and directory flows
+- the local storage key used by the app
+- creation of new empty coverage profiles
+- hydration of saved profiles from storage
+- safe defaults for old or partial data
+- merging live feed data into a profile
+- setting sync and error states
 
-The functions in this module are intentionally data-source agnostic. They operate
-on an injected profile list rather than importing a global dataset directly.
+### `src/lib/feed.ts`
+
+Owns baseline live-feed fetching:
+
+- fetches a briefing URL
+- requests JSON
+- validates the required top-level fields
+- normalizes array-like sections so the UI can render safely
+
+This module is intentionally small. If deployments need stronger validation, they should extend it without leaking secrets into the browser.
+
+### `src/lib/alertSync.ts`
+
+Tracks operational sync behavior:
+
+- compares the previous and next live alert sets
+- counts newly arrived live alerts
+- creates user-facing sync summaries
+
+### `src/lib/audio.ts`
+
+Provides the browser alert tone. It uses the Web Audio API so the project does not need to ship a bundled media file just to support alert playback.
+
+### `src/lib/location.ts`
+
+Handles coverage lookup and search:
+
+- location-code matches
+- alias matches
+- place and region matches
+- ranked autocomplete suggestions
+- consistent selection metadata for directory and search flows
+
+This module is data-source agnostic. It operates on the configured coverage profile list rather than importing a global dataset.
 
 ### `src/lib/briefing.ts`
 
-Builds the final location briefing:
+Builds the render-ready briefing:
 
-- sorts hazards by severity
-- computes summary metrics
-- shapes the selected location into a renderable briefing model
+- sorts hazard items by severity
+- calculates headline metrics
+- exposes refresh-state messaging for the selected profile
 
 ### `src/components/`
 
-Each major product surface is split into a focused UI component:
+The UI is split into focused surfaces:
 
-- `LocationConsole`
 - `OverviewPanel`
+- `LocationConsole`
+- `SetupPanel`
 - `AlertFeed`
 - `SituationPanels`
 - `OpenSourcePanel`
 
-The current UI intentionally avoids a map dependency. Coverage selection is handled through
-autocomplete search and a directory dropdown so the open-source core stays simpler to self-host
-and easier to verify.
+The product intentionally avoids a built-in map dependency in the current baseline. Coverage monitoring is driven by configured areas, search, and the directory dropdown.
 
-## Why the core has no auth
+## Trust boundary
 
-The project may eventually support user accounts, but the first open-source release does not depend on them.
+Emergency Centre is a public client. Feed URLs and feed responses are visible to the browser.
 
-Reasons:
+Implications:
 
-- public emergency information should not be gated behind signup
-- open-source self-hosters should have a safe default deployment path
-- identity systems create disproportionate security overhead early
-- location search works well as a public interaction model
+- never place private API keys directly in a client-visible feed URL
+- use a proxy or edge adapter for protected upstream providers
+- label source provenance clearly in the returned data
+- do not make unofficial feeds look identical to official ones
 
-## Future optional Supabase architecture
+## Future optional modules
 
-If auth is added later, it should be an optional module behind a feature flag.
+The baseline is deliberately narrow. Future modules can add:
 
-Recommended future scope:
+- account-backed saved places
+- outbound notification channels
+- moderation or editorial tooling
+- richer provider adapters
 
-- saved locations
-- notification preferences
-- volunteer or moderator dashboards
-- community reports with moderation
-- role-based editorial workflows
-
-Recommended technical constraints:
-
-- row-level security
-- separate public read models from private user data
-- explicit moderation state for any user-generated report
-- strong audit trails for published alerts
-
-## Data-source posture
-
-The product should keep provider integrations abstract. Self-hosters may not all want the same sources.
-
-Target provider categories:
-
-- weather
-- flood and river telemetry
-- seismic feeds
-- civil or official public notices
-- public newsroom updates
-
-The current mock dataset exists to preserve this architecture until real adapters are added.
+Those should stay optional and should not weaken the no-login default deployment path.

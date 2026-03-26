@@ -24,11 +24,13 @@ npm run build
 
 ## Project layout
 
-- `src/App.tsx`: top-level composition and user interaction flow
+- `src/App.tsx`: state orchestration, polling, selection, and top-level composition
 - `src/components/`: isolated UI sections
-- `src/data/mockNetwork.ts`: local seed dataset for the baseline app
-- `src/providers/mockProvider.ts`: provider boundary used by the baseline build
-- `src/lib/location.ts`: autocomplete ranking, coverage lookup, and selection helpers
+- `src/lib/setup.ts`: persisted setup and profile lifecycle helpers
+- `src/lib/feed.ts`: live feed fetching
+- `src/lib/alertSync.ts`: sync summaries and new-alert detection
+- `src/lib/audio.ts`: alert sound playback
+- `src/lib/location.ts`: search and selection logic
 - `src/lib/briefing.ts`: briefing shaping and summary metrics
 - `src/types.ts`: shared frontend contracts
 - `src/styles.css`: visual system and responsive layout
@@ -36,41 +38,54 @@ npm run build
 ## Architectural rules
 
 - Keep the default build public and usable without login.
-- Do not add identity or private persistence as a hidden dependency.
-- Keep location and briefing logic data-source agnostic where practical.
-- Treat provider integrations as replaceable modules.
-- Make trust posture explicit when rendering third-party or mixed-confidence data.
+- Do not introduce private auth or database dependencies into the open-source baseline.
+- Treat coverage feeds as replaceable integrations.
+- Keep search and selection logic independent from any single provider.
+- Make feed health and trust posture visible to users.
+- Do not silently mix official data with unverified data.
 
-## Provider integration guidance
+## Live feed guidance
 
-The current app uses a local mock provider. Live integrations should preserve the same boundary:
+Each coverage record points to one briefing URL. That endpoint must return the normalized JSON shape documented in [feed-schema.md](./feed-schema.md).
 
-- fetch or assemble coverage profiles outside the UI components
-- normalize provider data into the shared `LocationProfile` contract
-- include generic location codes rather than UK-only postcode assumptions
-- label source provenance clearly
-- avoid mixing trusted official data and lower-confidence reports without visible distinction
+Key rules:
 
-If a future provider needs secrets, do not wire those secrets into the public client directly. Use a server or edge boundary and document it explicitly.
+- coverage metadata is configured locally by the user
+- live briefing data is fetched from the configured URL
+- if an upstream provider needs secrets, use a server or edge adapter
+- if the upstream blocks browser access, use a proxy that adds the correct CORS headers
+- keep returned data explicit about source provenance
 
-## Optional auth guidance
+## Local persistence model
 
-Authentication is not part of the open-source baseline. If it is added later:
+The open-source core stores setup in browser local storage. That currently includes:
 
-- place it behind a clearly documented optional module
-- separate public read models from private user data
-- document every new environment variable
-- explain the threat model and moderation responsibilities in `docs/security-model.md`
+- configured coverage records
+- polling interval
+- alert sound preference
+- alert volume preference
+- unit system preference
+
+Do not treat this as a secure store. It is a convenience layer for local configuration.
+
+## UI guidance
+
+- Empty states must be explicit when no coverage feed is configured.
+- Syncing, live, idle, and error states should remain visually distinct.
+- Search must keep working for generic location codes, not only UK postcodes.
+- Avoid stretching hero copy or overloading the control panel with long paragraphs.
 
 ## Verification checklist
 
 Before opening a pull request:
 
 - run `npm run build`
-- review the changed screens in the browser
+- test the setup flow by adding and removing a coverage feed
+- test a successful live refresh
+- test a failing feed URL and confirm the error state is visible
+- test the sound button in the browser
 - confirm mobile layout still works
-- check that no new feature blocks public access by default
-- update `README.md` and the docs set if behavior changed
+- update the docs set if behavior changed
 
 ## Documentation expectations
 
@@ -79,4 +94,5 @@ When a feature changes, update the relevant docs at the same time:
 - `README.md` for product direction or setup changes
 - `docs/feature-reference.md` for user-facing behavior
 - `docs/architecture.md` for structural changes
+- `docs/feed-schema.md` for contract changes
 - `docs/security-model.md` for trust, privacy, or auth implications

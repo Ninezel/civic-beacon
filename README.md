@@ -1,63 +1,74 @@
 # Emergency Centre
 
-Emergency Centre is an open-source public briefing app for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and civic emergency signals.
+Emergency Centre is an open-source web app for monitoring real emergency coverage feeds. It is built for storms, flooding, earthquakes, wildfire pressure, air-quality incidents, missing-person bulletins, and other public-safety alerts.
 
-The open-source core is intentionally public and location-first:
+The open-source core is intentionally:
 
-- no mandatory login
-- no mandatory Supabase dependency
-- no user account required to inspect local conditions
-- designed so self-hosters can swap in their own trusted data providers
+- public
+- usable without login
+- self-hostable
+- feed-driven instead of vendor-locked
 
 [Support ongoing development on Ko-Fi](https://ko-fi.com/ninezel)
 
-## Product direction
+## Current product model
 
-Emergency Centre is being repositioned away from a private operator console and toward a public information surface that helps anyone:
+Emergency Centre no longer ships with baked-in mock coverage data. Instead, each deployment configures its own coverage areas and feed URLs through the in-app setup surface.
 
-- search by postcode, ZIP code, address hint, district, or place
-- use autocomplete suggestions from a local coverage directory
-- switch between supported coverage areas from a dropdown
-- view public hazard signals
-- read weather, situation, and public-safety updates
-- check source health and trust posture
-- see recommended readiness actions
+Each configured coverage area includes:
 
-## Why there is no login in the open-source core
+- name
+- region
+- country
+- location codes such as postcodes or ZIP codes
+- aliases or address hints for search
+- coordinates for the coverage record
+- a live JSON briefing endpoint
 
-The default posture is public access because:
+The app stores that configuration locally in the browser, polls the configured feeds, and renders the normalized weather, hazard, public-briefing, and readiness data.
 
-- emergency information should not be gated behind an account wall
-- open-source self-hosters should be able to deploy the app without identity infrastructure
-- storing user identity and saved locations increases security and privacy obligations
-- public read-only access is the safest baseline
+## Core features
 
-Supabase is still a valid future extension for:
+- no mandatory login in the open-source core
+- coverage search by postcode, ZIP code, city, district, alias, or code
+- coverage directory dropdown
+- live polling for configured briefing feeds
+- browser sound alerts when new live alerts appear
+- metric or imperial display preference
+- manual feed refresh and sound test controls
+- hazard, weather, public-briefing, source-health, and readiness panels
+- local persistence for coverage setup and monitoring preferences
 
-- saved places
-- subscriptions
-- community reports
-- role-based moderation
+## Feed setup quick start
 
-But it is intentionally not required for the first open-source release.
+1. Start the app locally.
+2. Open the `Live Alert Setup` section.
+3. Add a coverage area with its metadata and briefing feed URL.
+4. Make sure the feed returns the JSON shape documented in [docs/feed-schema.md](./docs/feed-schema.md).
+5. If the upstream provider needs secrets or blocks browser requests, put a proxy or adapter in front of it.
+6. Use `Refresh feeds now` to run the first sync.
 
 ## Documentation
 
 - [Architecture notes](./docs/architecture.md)
 - [Feature reference](./docs/feature-reference.md)
 - [Developer guide](./docs/developer-guide.md)
+- [Feed schema](./docs/feed-schema.md)
 - [Security model](./docs/security-model.md)
 - [Contributing guide](./CONTRIBUTING.md)
 
 ## Repository layout
 
-- `src/App.tsx`: top-level application shell
-- `src/components/`: UI sections for coverage search, alert feeds, situation panels, and OSS posture
-- `src/data/mockNetwork.ts`: mock hazard/news/weather/source data
-- `src/lib/location.ts`: autocomplete matching, directory lookup, and coverage selection helpers
-- `src/lib/briefing.ts`: briefing assembly for the selected location
-- `src/types.ts`: shared frontend types
-- `src/styles.css`: visual system and page styling
+- `src/App.tsx`: top-level application shell and state orchestration
+- `src/components/`: overview, coverage, setup, alert, and information panels
+- `src/lib/location.ts`: coverage matching, suggestion ranking, and selection helpers
+- `src/lib/briefing.ts`: briefing assembly for the selected coverage area
+- `src/lib/feed.ts`: live feed fetching and baseline response validation
+- `src/lib/setup.ts`: local setup persistence and coverage profile hydration
+- `src/lib/alertSync.ts`: live-alert diffing and sync summary helpers
+- `src/lib/audio.ts`: browser alert sound playback
+- `src/types.ts`: shared frontend contracts
+- `src/styles.css`: visual system and responsive layout
 
 ## Stack
 
@@ -88,28 +99,27 @@ npm run build
 
 ## Environment variables
 
-The current open-source baseline does not require any environment variables.
+The open-source core currently requires no environment variables.
 
-See [.env.example](./.env.example) for the current placeholder policy. If optional
-modules such as accounts or subscriptions are introduced later, they should ship
-their own documented variables and setup steps.
+If you add live providers that need secrets, do not expose those secrets in the public client. Put them behind a server or edge adapter and document that setup separately.
 
 ## Open-source scope
 
 Current core:
 
-- public read-only hazard briefing experience
-- mock provider architecture
-- local typeahead coverage search and directory selection
-- support for weather, hazard, and public-safety bulletins
-- no user accounts
+- public monitoring without accounts
+- user-configured coverage areas
+- browser-local setup persistence
+- live feed polling
+- alert sound playback
+- replaceable feed providers
 
-Planned optional modules:
+Deferred optional modules:
 
-- Supabase-backed saved locations
-- subscriptions and notifications
-- moderation and operator review workflows
-- real provider adapters for weather, flood, seismic, and news sources
+- saved places across devices
+- subscriptions and outbound notifications
+- moderator or operator workflows
+- optional auth-backed personalization
 
 ## License
 

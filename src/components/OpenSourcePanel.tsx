@@ -25,10 +25,10 @@ export function OpenSourcePanel() {
           </p>
         </article>
         <article className="info-card">
-          <strong>Supabase is optional future infrastructure</strong>
+          <strong>No bundled feeds or vendor lock-in</strong>
           <p>
-            Saved places, subscriptions, and community reports can be added later, but they are not
-            part of the default security boundary.
+            Each deployment chooses its own trusted alert feeds. The open-source core does not force
+            a hosted backend or a single commercial data source.
           </p>
         </article>
         <article className="info-card">

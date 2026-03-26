@@ -8,6 +8,7 @@ Emergency Centre is an open-source public-good project. Contributions should imp
 - Read the [architecture notes](./docs/architecture.md).
 - Read the [feature reference](./docs/feature-reference.md) before changing visible behavior.
 - Read the [developer guide](./docs/developer-guide.md) before introducing new providers or build-time dependencies.
+- Read the [feed schema](./docs/feed-schema.md) before changing the live briefing contract.
 - Read the [security model](./docs/security-model.md) before adding data collection, providers, or auth.
 
 ## Local setup
@@ -35,6 +36,7 @@ npm run build
 - keep public access working without a login
 - treat Supabase as optional future infrastructure, not a hard dependency
 - keep provider integrations replaceable
+- document feed contract changes immediately
 - document every user-visible behavior change
 - explain trust and security tradeoffs in pull requests
 

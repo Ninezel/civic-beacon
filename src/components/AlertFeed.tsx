@@ -23,30 +23,37 @@ export function AlertFeed({ hazardFeed }: AlertFeedProps) {
         <div className="panel-heading-badge">{hazardFeed.length} live items</div>
       </div>
       <div className="stack-list">
-        {hazardFeed.map((signal) => (
-          <article key={signal.id} className="record-card">
-            <div className="record-top">
-              <div>
-                <div className="record-kicker">{signal.status}</div>
-                <strong>{signal.title}</strong>
-                <p>
-                  {signal.issuedAt} · {signal.source}
-                </p>
+        {hazardFeed.length > 0 ? (
+          hazardFeed.map((signal) => (
+            <article key={signal.id} className="record-card">
+              <div className="record-top">
+                <div>
+                  <div className="record-kicker">{signal.status}</div>
+                  <strong>{signal.title}</strong>
+                  <p>
+                    {signal.issuedAt} · {signal.source}
+                  </p>
+                </div>
+                <div className="chip-row">
+                  <span className={`status-chip ${severityClass(signal.severity)}`}>{signal.severity}</span>
+                  <span className="status-chip status-light">{categoryLabel(signal.category)}</span>
+                </div>
               </div>
-              <div className="chip-row">
-                <span className={`status-chip ${severityClass(signal.severity)}`}>{signal.severity}</span>
-                <span className="status-chip status-light">{categoryLabel(signal.category)}</span>
+              <p>{signal.summary}</p>
+              <div className="record-footer">
+                <span>{signal.coverage}</span>
+                <span>
+                  {signal.hotspotLabel} · {signal.reactionCount} field reactions
+                </span>
               </div>
-            </div>
-            <p>{signal.summary}</p>
-            <div className="record-footer">
-              <span>{signal.coverage}</span>
-              <span>
-                {signal.hotspotLabel} · {signal.reactionCount} field reactions
-              </span>
-            </div>
+            </article>
+          ))
+        ) : (
+          <article className="record-card compact-card empty-record-card">
+            <strong>No live alerts in the current briefing.</strong>
+            <p>The selected coverage feed is connected, but it is not reporting active hazard or public-safety items right now.</p>
           </article>
-        ))}
+        )}
       </div>
     </section>
   )

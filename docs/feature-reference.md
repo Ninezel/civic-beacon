@@ -6,19 +6,45 @@ This document describes every user-facing feature in the current Emergency Centr
 
 Purpose:
 
-- allow anyone to inspect local conditions immediately
+- allow communities to inspect emergency coverage without an account wall
 
 Current behavior:
 
 - no account required
 - no login prompt
-- no saved profile workflow
+- no mandatory Supabase dependency
+- no saved cross-device identity workflow in the core app
 
-## 2. Location console
+## 2. Live alert setup
 
 Purpose:
 
-- let the user choose an area quickly
+- let each deployment connect real alert feeds instead of relying on bundled demo data
+
+Current inputs:
+
+- coverage name
+- region or state
+- country
+- location codes
+- aliases or address hints
+- latitude
+- longitude
+- briefing feed URL
+
+Current behavior:
+
+- setup is stored locally in the browser
+- the app can add and remove coverage records
+- `Refresh feeds now` forces an immediate sync
+- the sound test button plays the current alert tone
+- unit display can be switched between metric and imperial
+
+## 3. Coverage search
+
+Purpose:
+
+- let the user switch quickly between configured coverage areas
 
 Current inputs:
 
@@ -26,54 +52,88 @@ Current inputs:
 - autocomplete suggestions
 - coverage directory dropdown
 
-Accepted search style examples:
+Accepted search examples:
 
 - postcode
 - ZIP code
 - location code
 - city name
+- district name
 - neighborhood name
 - general address hint
 
 Current implementation note:
 
-- search suggestions come from the local mock coverage directory rather than a live geocoder
-- the matching logic operates on provider-supplied coverage profiles rather than a hard-coded UI dependency
+- search suggestions are generated from configured coverage profiles
+- there is no built-in external geocoder in the open-source core
 
-## 3. Coverage directory selection
+## 4. Coverage sync states
 
 Purpose:
 
-- provide a stable fallback when the user prefers a known supported area list
+- show whether the selected feed is ready, syncing, live, or failing
+
+Current states:
+
+- waiting for first sync
+- syncing live feeds
+- live feed
+- feed issue
 
 Current behavior:
 
-- a select menu lists every available coverage profile
-- choosing an item updates the full briefing immediately
-- the selected coverage area also updates the search field context
+- feed errors are surfaced directly in the control panel
+- successful syncs update the overview metrics and downstream panels
+
+## 5. Polling and manual refresh
+
+Purpose:
+
+- keep the selected coverage areas current
+
+Current behavior:
+
+- polling interval is configurable in the setup panel
+- feeds are automatically polled on the selected interval
+- the setup panel can force a manual refresh
+
+## 6. Sound alerts
+
+Purpose:
+
+- make newly arrived live alerts harder to miss
+
+Current behavior:
+
+- audio alerts can be enabled or disabled
+- alert volume is configurable
+- the app compares the previous and next live alert sets
+- the browser tone plays when new live alerts arrive after the first successful sync
 
 Current limitation:
 
-- the baseline ships with a mock coverage directory, not live address autocomplete or GIS data
+- browser autoplay policy can block sound until the user interacts with the page
 
-## 4. Headline overview
+## 7. Headline overview
 
 Purpose:
 
-- summarize local risk in one glance
+- summarize local risk and current monitoring posture in one glance
 
 Current contents:
 
+- configured coverage feed count
 - active signal count
 - critical signal count
-- location confidence mode
-- refresh status
+- refresh state
+- current selection mode
+- last refresh summary
 
-## 5. Hazard feed
+## 8. Hazard feed
 
 Purpose:
 
-- show the actual incidents and monitored signals for the selected location
+- show the active incidents and monitored signals for the selected coverage area
 
 Current card contents:
 
@@ -103,25 +163,25 @@ Public-safety examples may include:
 - search perimeters
 - police or civic safety notices
 
-## 6. Weather snapshot
+## 9. Weather snapshot
 
 Purpose:
 
-- provide a fast environmental read for the selected location
+- provide a fast environmental read for the selected coverage area
 
 Current contents:
 
 - condition
-- temperature
-- wind
+- temperature in metric or imperial display
+- wind in metric or imperial display
 - rain chance
 - short advisory text
 
-## 7. Situation news
+## 10. Situation news
 
 Purpose:
 
-- surface public briefing headlines around the selected location
+- surface public briefing headlines around the selected coverage area
 
 Current contents:
 
@@ -131,7 +191,7 @@ Current contents:
 - summary
 - scope label
 
-## 8. Readiness actions
+## 11. Readiness actions
 
 Purpose:
 
@@ -143,11 +203,11 @@ Current contents:
 - description
 - when-to-use guidance
 
-## 9. Source audit
+## 12. Source audit
 
 Purpose:
 
-- make trust posture visible
+- make source freshness and trust posture visible
 
 Current contents:
 
@@ -163,7 +223,7 @@ Current statuses:
 - Delayed
 - Manual review
 
-## 10. Open-source and security panel
+## 13. Open-source and security panel
 
 Purpose:
 
@@ -172,6 +232,6 @@ Purpose:
 Current contents:
 
 - no-login explanation
-- optional Supabase explanation
-- provider abstraction explanation
-- support / Ko-Fi link
+- optional-auth explanation
+- replaceable feed-provider explanation
+- Ko-Fi support link
