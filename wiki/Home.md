@@ -2,6 +2,10 @@
 
 Emergency Centre is an open-source multi-signal monitoring platform built for public-first coverage monitoring.
 
+Current release:
+
+- `v1.0.0`
+
 It currently includes:
 
 - a React frontend
@@ -9,6 +13,7 @@ It currently includes:
 - postcode and ZIP lookup
 - an optional local Node API
 - live briefing endpoints backed by official providers for the built-in starter zones
+- a reusable Node library for the same built-in provider stack
 - freshness-aware stale snapshot fallback for live starter routes
 - demo briefing endpoints as a fallback when you want a deterministic local feed
 - browser sound alerts and optional browser notifications for new live signals
@@ -28,6 +33,8 @@ If you want to understand how the starter directory works, go to [[Coverage Zone
 If you want to wire in real providers, go to [[Connect Real Feeds]].
 
 If you want to run or extend the local API, go to [[API Services]].
+
+If you want to reuse the built-in scrapers in another project, go to [[Node Library]].
 
 If you want the latest project release notes, go to [[Changelog]].
 
@@ -56,12 +63,21 @@ Follow:
 2. [[Connect Real Feeds]]
 3. [[Security Model]]
 
+### 4. I want to reuse the scrapers in another project
+
+Follow:
+
+1. [[Node Library]]
+2. [[API Services]]
+3. [[Security Model]]
+
 ## Core Concepts
 
 - `Coverage area`: a named monitoring zone with codes, aliases, coordinates, and a briefing URL
 - `Signals`: normalized weather, infrastructure, transport, airspace, public-safety, or other monitoring items
 - `Starter directory`: built-in bootstrap coverage data for supported countries
 - `Live briefing`: normalized feed data served by the local API from allowlisted official providers
+- `Node library`: installable package surface for the same built-in provider adapters and briefing builders
 - `Freshness`: whether the response is fully live or a clearly labeled stale snapshot
 - `Demo briefing`: generated fallback feed data served by the local API
 
@@ -71,6 +87,7 @@ Follow:
 - [[Coverage Zones]]
 - [[Connect Real Feeds]]
 - [[API Services]]
+- [[Node Library]]
 - [[Self Hosting]]
 - [[Security Model]]
 - [[Changelog]]

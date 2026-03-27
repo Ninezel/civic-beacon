@@ -108,6 +108,23 @@ Current behavior:
 - demo briefing endpoints remain available as a fallback route
 - the API does not currently provide auth, persistence, or a generic proxy route
 
+## 4a. Reusable Node library
+
+Purpose:
+
+- let other projects reuse the built-in scrapers, provider adapters, and normalized briefing builders without embedding the Emergency Centre UI
+
+Current behavior:
+
+- the package can be installed directly from GitHub
+- the public package entrypoints are:
+  - `emergency-centre`
+  - `emergency-centre/catalog`
+  - `emergency-centre/providers`
+- built-in catalog helpers can resolve zones by id or search them through the shared starter dataset
+- provider functions can be called directly for `NWS`, `Met Office`, `Environment Agency`, and `USGS`
+- high-level helpers can build normalized live or demo briefings for built-in zones or custom zone objects
+
 ## 5. Coverage sync states
 
 Purpose:

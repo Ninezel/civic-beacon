@@ -2,6 +2,35 @@
 
 All notable project-facing changes for Emergency Centre are recorded here.
 
+## v1.0.0 - 2026-03-27
+
+### Added
+
+- a reusable Node library surface under `server/library/` with stable package entrypoints for:
+  - built-in coverage catalog lookup
+  - direct provider adapter access
+  - normalized live briefing generation
+  - deterministic demo briefing generation
+- package exports for:
+  - `emergency-centre`
+  - `emergency-centre/catalog`
+  - `emergency-centre/providers`
+- install and usage documentation for consuming the scrapers and briefing builders from other projects
+- tests covering the public library surface and saved starter-route migration
+
+### Changed
+
+- promoted the package, API surface, and docs set to `v1.0.0`
+- improved release metadata in `package.json` with repository, bugs, homepage, keywords, and Node engine guidance
+- improved saved setup hydration so known built-in starter zones automatically migrate from `/api/briefings/demo/:zoneId` to `/api/briefings/live/:zoneId`
+- refined the setup and monitoring UI panels for denser operator workflows and clearer status presentation
+
+### Documentation
+
+- added `docs/node-library.md`
+- refreshed the README, developer guide, architecture notes, API reference, feature reference, security notes, and environment example
+- added and synced a wiki page for the reusable Node library plus updated release notes for `v1.0.0`
+
 ## 2026-03-26
 
 ### Added

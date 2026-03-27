@@ -49,6 +49,17 @@ Current posture:
 - it labels stale snapshot fallback explicitly through response freshness metadata
 - it should still be treated as a public service unless you place it behind your own network controls
 
+## Reusable Node library boundary
+
+The package now also exposes the same allowlisted provider stack as a reusable Node library.
+
+Current posture:
+
+- it exposes only the adapters and catalog helpers already defined in this repository
+- it does not create a generic unrestricted scraping interface
+- it should still be treated as code that reaches third-party upstreams directly from your runtime
+- if you publish your own service on top of it, you own the rate limits, caching, provenance labeling, and trust posture around that deployment
+
 ## Current priority risks
 
 - misleading or spoofed upstream data

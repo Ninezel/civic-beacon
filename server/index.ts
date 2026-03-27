@@ -11,13 +11,14 @@ import {
 
 const app = express()
 const port = Number.parseInt(process.env.EC_API_PORT ?? '8787', 10)
+const API_VERSION = '1.0.0'
 
 app.disable('x-powered-by')
 
 app.get('/api', (_request, response) => {
   response.json({
     service: 'emergency-centre-api',
-    version: '0.1.0',
+    version: API_VERSION,
     endpoints: [
       '/api/health',
       '/api/catalog/countries',

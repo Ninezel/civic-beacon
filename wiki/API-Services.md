@@ -2,6 +2,8 @@
 
 Emergency Centre includes an optional local Node API service.
 
+The same provider stack is also exposed as an installable Node package. See [[Node Library]].
+
 Default local origin:
 
 - `http://localhost:8787`
@@ -125,3 +127,5 @@ npm test
 ```
 
 Those tests exist to catch upstream payload and markup drift before it becomes a silent live-data break.
+
+If you want to consume the scrapers directly from Node instead of through HTTP routes, use [[Node Library]].

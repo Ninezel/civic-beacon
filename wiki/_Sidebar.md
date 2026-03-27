@@ -5,6 +5,7 @@
 - [[Coverage Zones]]
 - [[Connect Real Feeds]]
 - [[API Services]]
+- [[Node Library]]
 - [[Self Hosting]]
 - [[Security Model]]
 - [[Changelog]]

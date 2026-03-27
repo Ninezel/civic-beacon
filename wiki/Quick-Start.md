@@ -8,6 +8,10 @@ This guide gets Emergency Centre running locally with the smallest possible path
 - npm available
 - the repository cloned locally
 
+Recommended runtime:
+
+- `Node.js 20+`
+
 ## Step-By-Step
 
 1. Open a terminal in the repository root.
@@ -77,3 +81,4 @@ That currently covers:
 
 - provider parser fixtures
 - stale snapshot fallback behavior
+- public Node library surface checks

@@ -2,6 +2,21 @@
 
 This page tracks user-facing release notes for Emergency Centre.
 
+## v1.0.0 - 2026-03-27
+
+### Reusable provider library
+
+- added installable Node package entrypoints for built-in catalog lookup, provider adapter access, live briefing generation, and demo briefing generation
+- documented GitHub install and import examples so other projects can reuse the scrapers directly
+- added tests for the public library surface
+
+### Release polish
+
+- promoted the project metadata and API discovery surface to `v1.0.0`
+- improved saved starter-zone migration so old demo routes upgrade automatically to live starter routes
+- refreshed the setup and monitoring UI for a cleaner operator workflow
+- updated the README, docs set, environment example, and wiki pages to match the release
+
 ## 2026-03-26
 
 ### Provider reliability pass

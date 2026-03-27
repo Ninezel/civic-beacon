@@ -8,6 +8,8 @@ Emergency Centre now ships with a small optional Node API service. It is intende
 - built-in demo briefing endpoints
 - local health checks
 
+The same provider stack is also exposed as an installable Node library. See [node-library.md](./node-library.md).
+
 The default local base URL is:
 
 - `http://localhost:8787`
@@ -141,6 +143,7 @@ That command resolves to:
 - live starter-zone routes use a small in-memory cache to avoid hammering upstream providers during polling
 - live starter-zone routes also keep a last-known-good briefing snapshot per zone so upstream failures can degrade to an explicitly labeled stale response instead of a hard outage
 - provider adapters are allowlisted in code; the API does not fetch arbitrary user-supplied upstream URLs
+- self-hosters can set `EC_PROVIDER_USER_AGENT` to make upstream traffic easier to identify
 - provider parsing is split across dedicated modules under `server/services/providers/`
 - the built-in live routes are meant as a starter operational layer, not a replacement for region-specific verification and local adapters
 

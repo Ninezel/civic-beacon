@@ -39,11 +39,49 @@ const matchKindLabel = {
   country: 'Country',
 }
 
+const setupHighlights = [
+  {
+    label: 'Fastest path',
+    title: 'Load a starter zone',
+    detail: 'Pick a built-in country, region, and coverage area to prefill a live provider route.',
+  },
+  {
+    label: 'Manual path',
+    title: 'Bring your own feed',
+    detail: 'Use any normalized JSON briefing endpoint if you already run your own adapter or proxy.',
+  },
+  {
+    label: 'Reliability',
+    title: 'Watch freshness',
+    detail: 'The workspace now shows stale snapshot state and upstream links when providers degrade.',
+  },
+] as const
+
 function splitCsv(value: string) {
   return value
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function describeCoverageStatus(profile: LocationProfile) {
+  if (profile.fetchStatus === 'error') {
+    return 'Feed issue'
+  }
+
+  if (profile.fetchStatus === 'syncing') {
+    return 'Syncing'
+  }
+
+  if (profile.fetchStatus === 'live' && profile.freshness.status === 'stale') {
+    return 'Stale snapshot'
+  }
+
+  if (profile.fetchStatus === 'live') {
+    return 'Live'
+  }
+
+  return 'Waiting'
 }
 
 export function SetupPanel({
@@ -55,6 +93,7 @@ export function SetupPanel({
   onUpdateSettings,
 }: SetupPanelProps) {
   const [formState, setFormState] = useState(initialFormState)
+  const [builderTab, setBuilderTab] = useState<'starter' | 'record'>('starter')
   const [catalogCountry, setCatalogCountry] = useState('')
   const [catalogRegion, setCatalogRegion] = useState('')
   const [catalogZoneId, setCatalogZoneId] = useState('')
@@ -64,6 +103,7 @@ export function SetupPanel({
   const catalogRegions = getCoverageCatalogRegions(catalogCountry || null)
   const catalogZones = getCoverageCatalogZones(catalogCountry || null, catalogRegion || null)
   const lookupSuggestions = getCoverageCatalogSuggestions(lookupQuery, catalogCountry || null)
+  const selectedCatalogZone = catalogZoneId ? findCoverageCatalogZoneById(catalogZoneId) : null
 
   function updateField(field: keyof typeof initialFormState, value: string) {
     setFormState((current) => ({
@@ -79,11 +119,12 @@ export function SetupPanel({
       return
     }
 
-    const nextDraft = createDraftFromCoverageCatalogZone(zone, formState.briefingUrl)
+    const nextDraft = createDraftFromCoverageCatalogZone(zone)
     setCatalogCountry(zone.countryCode)
     setCatalogRegion(zone.regionCode)
     setCatalogZoneId(zone.id)
     setLookupQuery(zone.locationCodes[0] ?? zone.name)
+    setBuilderTab('record')
     setFormState({
       name: nextDraft.name,
       region: nextDraft.region,
@@ -100,11 +141,22 @@ export function SetupPanel({
     setCatalogCountry(value)
     setCatalogRegion('')
     setCatalogZoneId('')
+    setBuilderTab('starter')
   }
 
   function handleCatalogRegionChange(value: string) {
     setCatalogRegion(value)
     setCatalogZoneId('')
+    setBuilderTab('starter')
+  }
+
+  function handleCatalogZoneChange(value: string) {
+    if (!value) {
+      setCatalogZoneId('')
+      return
+    }
+
+    loadCatalogZone(value)
   }
 
   function handleLookup() {
@@ -132,6 +184,20 @@ export function SetupPanel({
     })
 
     setFormState(initialFormState)
+    setCatalogCountry('')
+    setCatalogRegion('')
+    setCatalogZoneId('')
+    setLookupQuery('')
+    setBuilderTab('starter')
+  }
+
+  function resetDraft() {
+    setFormState(initialFormState)
+    setCatalogCountry('')
+    setCatalogRegion('')
+    setCatalogZoneId('')
+    setLookupQuery('')
+    setBuilderTab('starter')
   }
 
   return (
@@ -147,196 +213,268 @@ export function SetupPanel({
       </div>
 
       <p className="panel-copy">
-        Each coverage area should point to a JSON briefing endpoint that returns normalized weather,
-        signal, news, source-health, readiness, and freshness data. If your source does not
-        support browser access, place a small proxy or adapter in front of it. The preferred event
-        list field is `signals`, but the open-source client still accepts the legacy `hazards`
-        field for backwards compatibility.
+        Each coverage area points to one normalized JSON briefing endpoint. Use a starter zone for
+        the quickest path, or bring your own feed route if you already run an adapter or proxy.
       </p>
+
+      <div className="setup-overview-strip">
+        {setupHighlights.map((highlight) => (
+          <article key={highlight.title} className="setup-overview-pill">
+            <span>{highlight.label}</span>
+            <strong>{highlight.title}</strong>
+            <p>{highlight.detail}</p>
+          </article>
+        ))}
+      </div>
 
       <SetupTutorial />
 
       <div className="setup-grid">
         <form className="setup-form" onSubmit={handleSubmit}>
-          <section className="coverage-catalog-card">
-            <div className="section-label">Coverage Starter Directory</div>
-            <h3>Load built-in coverage zones for the UK and US</h3>
-            <p className="panel-copy">
-              Pick a country, region, and coverage area, or search by postcode or ZIP code. This
-              fills the coverage metadata into the form below. If the feed URL is blank, the
-              starter flow also loads a local live-provider API briefing endpoint for that zone.
-            </p>
-
-            <div className="setup-field-grid">
-              <label className="setup-field">
-                <span>Country</span>
-                <select value={catalogCountry} onChange={(event) => handleCatalogCountryChange(event.target.value)}>
-                  <option value="">Choose country</option>
-                  {catalogCountries.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="setup-field">
-                <span>Region / state</span>
-                <select
-                  value={catalogRegion}
-                  onChange={(event) => handleCatalogRegionChange(event.target.value)}
-                  disabled={!catalogCountry}
-                >
-                  <option value="">Choose region</option>
-                  {catalogRegions.map((region) => (
-                    <option key={region.code} value={region.code}>
-                      {region.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="setup-field setup-field-wide">
-                <span>Coverage area</span>
-                <select
-                  value={catalogZoneId}
-                  onChange={(event) => setCatalogZoneId(event.target.value)}
-                  disabled={!catalogCountry}
-                >
-                  <option value="">Choose coverage area</option>
-                  {catalogZones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name} · {zone.region}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <div className="setup-builder-bar">
+            <div>
+              <div className="section-label">Coverage Builder</div>
+              <p className="setup-builder-copy">
+                Pick a starter zone or jump straight into the saved record form.
+              </p>
             </div>
-
-            <div className="catalog-actions">
+            <div className="setup-builder-tabs" role="tablist" aria-label="Coverage builder views">
               <button
-                className="ghost-button"
+                className={`setup-builder-tab ${builderTab === 'starter' ? 'setup-builder-tab-active' : ''}`}
                 type="button"
-                disabled={!catalogZoneId}
-                onClick={() => loadCatalogZone(catalogZoneId)}
+                onClick={() => setBuilderTab('starter')}
               >
-                Load selected coverage zone
+                Starter zones
+              </button>
+              <button
+                className={`setup-builder-tab ${builderTab === 'record' ? 'setup-builder-tab-active' : ''}`}
+                type="button"
+                onClick={() => setBuilderTab('record')}
+              >
+                Record form
               </button>
             </div>
-
-            <div className="catalog-lookup">
-              <label className="setup-field setup-field-wide">
-                <span>Find by postcode or ZIP code</span>
-                <input
-                  value={lookupQuery}
-                  onChange={(event) => setLookupQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      handleLookup()
-                    }
-                  }}
-                  placeholder="Try SW1A 1AA, CF10 1EP, 94103, or 10001"
-                />
-              </label>
-
-              <button className="ghost-button" type="button" onClick={handleLookup} disabled={!lookupQuery.trim()}>
-                Find zone
-              </button>
-            </div>
-
-            {lookupQuery.trim().length > 1 ? (
-              <div className="catalog-suggestion-list" role="listbox" aria-label="Coverage starter suggestions">
-                {lookupSuggestions.length > 0 ? (
-                  lookupSuggestions.map((suggestion) => (
-                    <button
-                      key={suggestion.id}
-                      className="suggestion-item suggestion-item-light"
-                      type="button"
-                      onClick={() => loadCatalogZone(suggestion.zone.id)}
-                    >
-                      <span className="suggestion-copy">
-                        <strong>{suggestion.zone.name}</strong>
-                        <span>
-                          {suggestion.zone.region} · {suggestion.zone.country} ·{' '}
-                          {suggestion.zone.locationCodes.join(', ')}
-                        </span>
-                      </span>
-                      <span className="suggestion-match">
-                        {matchKindLabel[suggestion.matchKind]} · {suggestion.matchedText}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="suggestion-empty suggestion-empty-light">
-                    No built-in UK or US coverage zone matched that code.
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="suggestion-empty suggestion-empty-light">
-                Search by UK postcode or US ZIP to jump straight to a built-in coverage zone.
-              </div>
-            )}
-          </section>
-
-          <div className="setup-field-grid">
-            <label className="setup-field">
-              <span>Coverage name</span>
-              <input value={formState.name} onChange={(event) => updateField('name', event.target.value)} required />
-            </label>
-            <label className="setup-field">
-              <span>Region / state</span>
-              <input value={formState.region} onChange={(event) => updateField('region', event.target.value)} required />
-            </label>
-            <label className="setup-field">
-              <span>Country</span>
-              <input value={formState.country} onChange={(event) => updateField('country', event.target.value)} required />
-            </label>
-            <label className="setup-field">
-              <span>Location codes</span>
-              <input
-                value={formState.locationCodes}
-                onChange={(event) => updateField('locationCodes', event.target.value)}
-                placeholder="SW1A 1AA, EC4M 7RF"
-                required
-              />
-            </label>
-            <label className="setup-field">
-              <span>Aliases / address hints</span>
-              <input
-                value={formState.aliases}
-                onChange={(event) => updateField('aliases', event.target.value)}
-                placeholder="Westminster, South Bank"
-              />
-            </label>
-            <label className="setup-field">
-              <span>Latitude</span>
-              <input value={formState.latitude} onChange={(event) => updateField('latitude', event.target.value)} type="number" step="0.0001" required />
-            </label>
-            <label className="setup-field">
-              <span>Longitude</span>
-              <input value={formState.longitude} onChange={(event) => updateField('longitude', event.target.value)} type="number" step="0.0001" required />
-            </label>
-            <label className="setup-field setup-field-wide">
-              <span>Briefing feed URL</span>
-              <input
-                value={formState.briefingUrl}
-                onChange={(event) => updateField('briefingUrl', event.target.value)}
-                placeholder="/api/signals/london or https://signals.example.com/api/london.json"
-                required
-              />
-            </label>
           </div>
 
-          <button className="primary-button" type="submit">
-            Add coverage area
-          </button>
+          {selectedCatalogZone ? (
+            <div className="setup-loaded-banner">
+              <div>
+                <span>Starter zone loaded</span>
+                <strong>{selectedCatalogZone.name}</strong>
+              </div>
+              <button className="ghost-button" type="button" onClick={() => setBuilderTab('starter')}>
+                Change zone
+              </button>
+            </div>
+          ) : null}
+
+          {builderTab === 'starter' ? (
+            <section className="coverage-catalog-card">
+              <div className="section-label">Coverage Starter Directory</div>
+              <h3>Load built-in coverage zones for the UK and US</h3>
+
+              <div className="setup-field-grid">
+                <label className="setup-field">
+                  <span>Country</span>
+                  <select value={catalogCountry} onChange={(event) => handleCatalogCountryChange(event.target.value)}>
+                    <option value="">Choose country</option>
+                    {catalogCountries.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="setup-field">
+                  <span>Region / state</span>
+                  <select
+                    value={catalogRegion}
+                    onChange={(event) => handleCatalogRegionChange(event.target.value)}
+                    disabled={!catalogCountry}
+                  >
+                    <option value="">Choose region</option>
+                    {catalogRegions.map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="setup-field setup-field-wide">
+                  <span>Coverage area</span>
+                  <select
+                    value={catalogZoneId}
+                    onChange={(event) => handleCatalogZoneChange(event.target.value)}
+                    disabled={!catalogCountry}
+                  >
+                    <option value="">Choose coverage area</option>
+                    {catalogZones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} · {zone.region}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="catalog-lookup">
+                <label className="setup-field setup-field-wide">
+                  <span>Find by postcode or ZIP code</span>
+                  <input
+                    value={lookupQuery}
+                    onChange={(event) => setLookupQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        handleLookup()
+                      }
+                    }}
+                    placeholder="Try SW1A 1AA, CF10 1EP, 94103, or 10001"
+                  />
+                </label>
+
+                <button className="ghost-button" type="button" onClick={handleLookup} disabled={!lookupQuery.trim()}>
+                  Find zone
+                </button>
+              </div>
+
+              {lookupQuery.trim().length > 1 ? (
+                <div className="catalog-suggestion-list" role="listbox" aria-label="Coverage starter suggestions">
+                  {lookupSuggestions.length > 0 ? (
+                    lookupSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        className="suggestion-item suggestion-item-light"
+                        type="button"
+                        onClick={() => loadCatalogZone(suggestion.zone.id)}
+                      >
+                        <span className="suggestion-copy">
+                          <strong>{suggestion.zone.name}</strong>
+                          <span>
+                            {suggestion.zone.region} · {suggestion.zone.country} ·{' '}
+                            {suggestion.zone.locationCodes.join(', ')}
+                          </span>
+                        </span>
+                        <span className="suggestion-match">
+                          {matchKindLabel[suggestion.matchKind]} · {suggestion.matchedText}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="suggestion-empty suggestion-empty-light">
+                      No built-in UK or US coverage zone matched that code.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="suggestion-empty suggestion-empty-light">
+                  Search by UK postcode or US ZIP to jump straight to a built-in coverage zone.
+                </div>
+              )}
+
+              {selectedCatalogZone ? (
+                <div className="catalog-selection-card">
+                  <div className="setup-list-top">
+                    <div>
+                      <span className="section-label">Selected starter zone</span>
+                      <strong>{selectedCatalogZone.name}</strong>
+                      <p>
+                        {selectedCatalogZone.region} · {selectedCatalogZone.country}
+                      </p>
+                    </div>
+                    <span className="status-chip status-light">
+                      {selectedCatalogZone.locationCodes[0] ?? selectedCatalogZone.regionCode}
+                    </span>
+                  </div>
+                  <div className="catalog-selection-grid">
+                    <div>
+                      <span>Coverage codes</span>
+                      <p>{selectedCatalogZone.locationCodes.join(', ')}</p>
+                    </div>
+                    <div>
+                      <span>Starter route</span>
+                      <p>{`/api/briefings/live/${selectedCatalogZone.id}`}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : (
+            <section className="setup-section-card">
+              <div className="setup-section-header">
+                <div>
+                  <div className="section-label">Coverage record</div>
+                  <h3>Define or adjust the saved coverage entry</h3>
+                </div>
+                <span className="panel-heading-badge">Saved in browser only</span>
+              </div>
+
+              <div className="setup-field-grid">
+                <label className="setup-field">
+                  <span>Coverage name</span>
+                  <input value={formState.name} onChange={(event) => updateField('name', event.target.value)} required />
+                </label>
+                <label className="setup-field">
+                  <span>Region / state</span>
+                  <input value={formState.region} onChange={(event) => updateField('region', event.target.value)} required />
+                </label>
+                <label className="setup-field">
+                  <span>Country</span>
+                  <input value={formState.country} onChange={(event) => updateField('country', event.target.value)} required />
+                </label>
+                <label className="setup-field">
+                  <span>Location codes</span>
+                  <input
+                    value={formState.locationCodes}
+                    onChange={(event) => updateField('locationCodes', event.target.value)}
+                    placeholder="SW1A 1AA, EC4M 7RF"
+                    required
+                  />
+                </label>
+                <label className="setup-field">
+                  <span>Aliases / address hints</span>
+                  <input
+                    value={formState.aliases}
+                    onChange={(event) => updateField('aliases', event.target.value)}
+                    placeholder="Westminster, South Bank"
+                  />
+                </label>
+                <label className="setup-field">
+                  <span>Latitude</span>
+                  <input value={formState.latitude} onChange={(event) => updateField('latitude', event.target.value)} type="number" step="0.0001" required />
+                </label>
+                <label className="setup-field">
+                  <span>Longitude</span>
+                  <input value={formState.longitude} onChange={(event) => updateField('longitude', event.target.value)} type="number" step="0.0001" required />
+                </label>
+                <label className="setup-field setup-field-wide">
+                  <span>Briefing feed URL</span>
+                  <input
+                    value={formState.briefingUrl}
+                    onChange={(event) => updateField('briefingUrl', event.target.value)}
+                    placeholder="/api/briefings/live/gb-eng-greater-london-central or https://signals.example.com/api/london.json"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="setup-form-actions">
+                <button className="primary-button" type="submit">
+                  Add coverage area
+                </button>
+                <button className="ghost-button" type="button" onClick={resetDraft}>
+                  Reset draft
+                </button>
+              </div>
+            </section>
+          )}
         </form>
 
         <aside className="setup-side">
           <div className="settings-card">
-            <div className="section-label">Polling And Sound</div>
+            <div className="section-label">Polling, Alerts, And Units</div>
             <div className="settings-stack">
               <label className="setup-field">
                 <span>Display units</span>
@@ -409,10 +547,15 @@ export function SetupPanel({
             </div>
           </div>
 
-          <div className="settings-card">
-            <div id="setup-feed-schema" className="section-label">Feed Schema Essentials</div>
-            <div className="tutorial-schema-card">
-              <h3>Minimum JSON response</h3>
+          <details className="settings-card collapsible-card">
+            <summary className="collapsible-summary">
+              <div>
+                <div id="setup-feed-schema" className="section-label">Feed Schema Essentials</div>
+                <strong>Normalized briefing contract</strong>
+              </div>
+              <span className="panel-heading-badge">Expand</span>
+            </summary>
+            <div className="tutorial-schema-card collapsible-body">
               <p className="panel-copy">
                 Every live feed should return `outlook` and `weather` at minimum. `signals`,
                 `news`, `sources`, `actions`, and `freshness` are optional but recommended.
@@ -453,18 +596,30 @@ export function SetupPanel({
 }`}
               </pre>
             </div>
-          </div>
+          </details>
 
           <div className="settings-card">
-            <div className="section-label">Configured Coverage Areas</div>
+            <div className="panel-heading">
+              <div>
+                <div className="section-label">Configured Coverage Areas</div>
+                <p className="panel-copy">Saved locally for this browser session.</p>
+              </div>
+              <span className="panel-heading-badge">{setup.coverageProfiles.length}</span>
+            </div>
             <div className="setup-list">
               {setup.coverageProfiles.length > 0 ? (
                 setup.coverageProfiles.map((profile: LocationProfile) => (
                   <article key={profile.id} className="setup-list-item">
                     <div>
-                      <strong>{profile.name}</strong>
-                      <p>{profile.region} · {profile.country}</p>
-                      <p>{profile.briefingUrl}</p>
+                      <div className="setup-list-top">
+                        <strong>{profile.name}</strong>
+                        <span className="status-chip status-light">{describeCoverageStatus(profile)}</span>
+                      </div>
+                      <div className="setup-list-meta">
+                        <p>{profile.region} · {profile.country}</p>
+                        <p>{profile.lastUpdatedAt}</p>
+                      </div>
+                      <p className="setup-list-url">{profile.briefingUrl}</p>
                     </div>
                     <button className="ghost-button" type="button" onClick={() => onRemoveCoverage(profile.id)}>
                       Remove

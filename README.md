@@ -11,6 +11,10 @@ The project is intentionally:
 
 [Support ongoing development on Ko-Fi](https://ko-fi.com/ninezel)
 
+Current release:
+
+- `v1.0.0`
+
 ## What It Does
 
 Emergency Centre lets a deployment define one or more coverage areas and connect each one to a live JSON briefing feed.
@@ -47,6 +51,8 @@ The repository now includes a small Node API service for:
 - demo briefing endpoints as a fallback for built-in coverage zones
 - local health checks and API discovery
 
+It also now exposes the same provider stack as a reusable Node library, so other projects can install the repository and call the built-in scrapers and briefing helpers directly.
+
 ## Core Capabilities
 
 - coverage search by postcode, ZIP code, city, district, alias, or code
@@ -54,6 +60,7 @@ The repository now includes a small Node API service for:
 - built-in UK and US starter directory for coverage setup
 - postcode and ZIP lookup against the built-in starter directory
 - optional local API server for starter catalog, live provider, and demo fallback routes
+- reusable Node library exports for built-in catalog lookup, provider adapters, and briefing generation
 - live polling for configured briefing feeds
 - browser sound alerts when new live signals appear
 - optional browser notifications for new live signals after permission is granted
@@ -81,6 +88,10 @@ Instead:
 This keeps the core application generic and self-hostable while allowing each deployment to choose its own trusted data sources.
 
 ## Quick Start
+
+Recommended runtime:
+
+- `Node.js 20+`
 
 ```powershell
 cd g:\Projects\emergency-centre
@@ -120,6 +131,51 @@ Run the compiled API server with:
 node dist-server/server/index.js
 ```
 
+## Reusable Node Library
+
+You can install the repository directly from GitHub and reuse the catalog helpers, official-provider adapters, and normalized briefing builders in your own Node project.
+
+```powershell
+npm install github:Ninezel/emergency-centre
+```
+
+Example:
+
+```ts
+import {
+  buildCoverageZoneBriefing,
+  fetchCoverageZoneProviders,
+  getBuiltInCoverageZone,
+} from 'emergency-centre'
+
+const zone = getBuiltInCoverageZone('gb-eng-greater-manchester')
+
+if (!zone) {
+  throw new Error('Coverage zone not found.')
+}
+
+const briefing = await buildCoverageZoneBriefing(zone)
+const providers = await fetchCoverageZoneProviders(zone)
+
+console.log(briefing.outlook)
+console.log(providers.map((entry) => entry.provider.label))
+```
+
+Available entrypoints:
+
+- `emergency-centre`
+- `emergency-centre/catalog`
+- `emergency-centre/providers`
+
+The library surface includes:
+
+- built-in coverage catalog data and lookup helpers
+- direct access to the `NWS`, `Met Office`, `Environment Agency`, and `USGS` adapters
+- normalized live briefing builders for built-in coverage zones
+- demo briefing builders for deterministic local testing
+
+See [docs/node-library.md](./docs/node-library.md) for the full library guide.
+
 Useful local API endpoints:
 
 - `GET /api`
@@ -140,6 +196,8 @@ Those live routes currently normalize official provider data from:
 - `USGS` daily earthquake feeds for nearby seismic activity
 
 If an upstream refresh fails after a successful sync, the live route can return a clearly labeled stale snapshot while retrying providers in the background.
+
+If you want to identify your self-hosted adapter traffic more clearly to upstream providers, set `EC_PROVIDER_USER_AGENT` in your server environment. See [.env.example](./.env.example).
 
 ## Feed Requirements
 
@@ -178,6 +236,7 @@ Important constraints:
 - [Feature reference](./docs/feature-reference.md)
 - [Developer guide](./docs/developer-guide.md)
 - [Feed schema](./docs/feed-schema.md)
+- [Node library guide](./docs/node-library.md)
 - [Security model](./docs/security-model.md)
 - [Contributing guide](./CONTRIBUTING.md)
 
@@ -197,6 +256,7 @@ Important constraints:
 - `src/lib/units.ts`: display-layer unit conversion for weather output
 - `server/services/briefingSnapshotStore.ts`: last-known-good stale snapshot handling for live briefings
 - `server/services/providers/`: allowlisted upstream adapters and shared parsing helpers
+- `server/library/`: reusable Node library entrypoints for catalog lookup, provider access, and briefing generation
 - `server/`: Node API entrypoint plus catalog, live-provider, and demo-briefing services
 - `tests/`: provider parser fixtures and snapshot-store tests
 - `src/types.ts`: shared frontend contracts

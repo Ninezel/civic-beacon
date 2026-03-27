@@ -1,11 +1,55 @@
 {
   "name": "emergency-centre",
   "private": false,
-  "version": "0.1.0",
-  "description": "Open-source public multi-signal monitoring app for live coverage feeds.",
+  "version": "1.0.0",
+  "description": "Open-source public multi-signal monitoring app and reusable Node provider library for live coverage feeds.",
   "license": "AGPL-3.0-or-later",
   "funding": "https://ko-fi.com/ninezel",
+  "homepage": "https://github.com/Ninezel/emergency-centre#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ninezel/emergency-centre.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ninezel/emergency-centre/issues"
+  },
+  "keywords": [
+    "emergency",
+    "monitoring",
+    "weather",
+    "alerts",
+    "scraper",
+    "civic-tech",
+    "node-library"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
+  "main": "./dist-server/server/library/index.js",
+  "types": "./dist-server/server/library/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-server/server/library/index.d.ts",
+      "import": "./dist-server/server/library/index.js"
+    },
+    "./catalog": {
+      "types": "./dist-server/server/library/catalog.d.ts",
+      "import": "./dist-server/server/library/catalog.js"
+    },
+    "./providers": {
+      "types": "./dist-server/server/library/providers.d.ts",
+      "import": "./dist-server/server/library/providers.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist-server",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ],
   "scripts": {
     "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:client\"",
     "dev:client": "vite",
@@ -15,6 +59,7 @@
     "build:api": "tsc -p tsconfig.server.json",
     "start:api": "node dist-server/server/index.js",
     "preview": "vite preview",
+    "prepare": "npm run build:api",
     "test": "vitest run"
   },
   "dependencies": {

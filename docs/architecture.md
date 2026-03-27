@@ -151,6 +151,17 @@ Contains dedicated upstream adapters and shared parsing helpers. The current ada
 - Environment Agency flood warnings for England starter zones
 - USGS daily earthquake feeds
 
+### `server/library/`
+
+Provides the reusable Node-facing surface for other projects:
+
+- built-in catalog lookup helpers
+- direct provider adapter access
+- normalized live briefing generation
+- deterministic demo briefing generation
+
+This layer is intentionally a thin export surface over the allowlisted provider stack, so consumers can reuse the same adapters without reaching into internal server paths.
+
 ### `server/services/demoBriefingService.ts`
 
 Generates normalized demo briefings for starter coverage zones so the frontend can be run end to end without requiring a third-party provider on day one.
@@ -200,6 +211,8 @@ Implications:
 - do not make unofficial feeds look identical to official ones
 
 The local API added in this repo is intentionally narrow. It does not act as a generic open proxy.
+
+The reusable Node library shares the same trust boundary. It exposes the allowlisted adapters already in this repo; it does not turn Emergency Centre into a generic user-supplied scraping framework.
 
 ## Future optional modules
 

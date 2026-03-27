@@ -45,6 +45,12 @@ Run provider parser and snapshot-store tests with:
 npm test
 ```
 
+If you are validating the reusable package surface before a release, also check the package contents with:
+
+```powershell
+npm pack --dry-run
+```
+
 ## Project layout
 
 - `src/App.tsx`: state orchestration, polling, selection, and top-level composition
@@ -64,6 +70,7 @@ npm test
 - `server/services/liveBriefingService.ts`: live provider orchestration and response composition for starter zones
 - `server/services/briefingSnapshotStore.ts`: last-known-good stale snapshot handling for live briefings
 - `server/services/providers/`: dedicated upstream adapters and shared parsing helpers
+- `server/library/`: public Node library entrypoints for catalog lookup, provider access, and briefing generation
 - `server/services/providerCache.ts`: allowlisted upstream fetch and in-memory cache helpers
 - `server/services/demoBriefingService.ts`: demo API briefing generation
 - `tests/`: provider fixtures and snapshot fallback tests
@@ -119,6 +126,7 @@ Before opening a pull request:
 - run `npm run build`
 - run `npm test` if you changed provider parsing, snapshot behavior, or the live briefing contract
 - if you changed server behavior, run `npm run start:api` and hit at least one live starter route
+- if you changed the reusable package surface, verify `docs/node-library.md` and `npm pack --dry-run`
 - test the setup flow by adding and removing a coverage feed
 - test a successful live refresh
 - test a failing feed URL and confirm the error state is visible
@@ -136,4 +144,5 @@ When a feature changes, update the relevant docs at the same time:
 - `docs/feature-reference.md` for user-facing behavior
 - `docs/architecture.md` for structural changes
 - `docs/feed-schema.md` for contract changes
+- `docs/node-library.md` for installable package or provider-library changes
 - `docs/security-model.md` for trust, privacy, or auth implications

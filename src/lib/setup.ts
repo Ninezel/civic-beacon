@@ -8,9 +8,12 @@ import type {
   UnitSystem,
   WeatherSnapshot,
 } from '../types'
+import { findCoverageCatalogZoneById } from './coverageCatalog'
 
 const SETUP_STORAGE_KEY = 'emergency-centre.setup.v1'
 const LEGACY_SETUP_STORAGE_KEYS = ['emergency-centre.setup.v2']
+const DEMO_BRIEFING_ROUTE_PATTERN =
+  /^(?<prefix>.*)\/api\/briefings\/demo\/(?<zoneId>[a-z0-9-]+)(?<suffix>\/?(?:[?#].*)?)$/i
 
 function createEmptyWeather(): WeatherSnapshot {
   return {
@@ -68,6 +71,19 @@ function normalizeFreshness(value: unknown): BriefingFreshness {
   }
 }
 
+export function upgradeKnownStarterBriefingUrl(briefingUrl: string) {
+  const match = briefingUrl.trim().match(DEMO_BRIEFING_ROUTE_PATTERN)
+  const zoneId = match?.groups?.zoneId?.trim()
+
+  if (!zoneId || !findCoverageCatalogZoneById(zoneId)) {
+    return briefingUrl
+  }
+
+  const prefix = match?.groups?.prefix ?? ''
+  const suffix = match?.groups?.suffix ?? ''
+  return `${prefix}/api/briefings/live/${zoneId}${suffix}`
+}
+
 function normalizeProfile(raw: unknown, index: number): LocationProfile | null {
   if (!raw || typeof raw !== 'object') {
     return null
@@ -81,7 +97,10 @@ function normalizeProfile(raw: unknown, index: number): LocationProfile | null {
   const name = typeof candidate.name === 'string' ? candidate.name.trim() : ''
   const region = typeof candidate.region === 'string' ? candidate.region.trim() : ''
   const country = typeof candidate.country === 'string' ? candidate.country.trim() : ''
-  const briefingUrl = typeof candidate.briefingUrl === 'string' ? candidate.briefingUrl.trim() : ''
+  const briefingUrl =
+    typeof candidate.briefingUrl === 'string'
+      ? upgradeKnownStarterBriefingUrl(candidate.briefingUrl.trim())
+      : ''
   const lat = Number(candidate.coordinates?.lat)
   const lng = Number(candidate.coordinates?.lng)
 
